@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartNote Serene - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: '#2B6EB0',
+              'primary-light': '#60A5FA',
+              'background-light': '#F9FAFB',
+              'background-dark': '#101922',
+              surface: '#FFFFFF',
+              'text-main': '#1F2937',
+              'text-muted': '#6B7280',
+            },
+            fontFamily: {
+              display: ['Inter', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+            },
+            borderRadius: {
+              DEFAULT: '0.5rem',
+              lg: '12px',
+              xl: '1.5rem',
+              full: '9999px',
+            },
+            boxShadow: {
+              soft: '0 8px 24px -4px rgba(43, 110, 176, 0.08)',
+              float: '0 12px 32px -4px rgba(43, 110, 176, 0.20)',
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .masonry-grid {
+        column-count: 2;
+        column-gap: 1rem;
+      }
+      .masonry-item {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+      }
+      @keyframes breathe {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+        100% { transform: scale(1); }
+      }
+      .animate-breathe {
+        animation: breathe 3s ease-in-out infinite;
+      }
+      .glass-header {
+        background: rgba(249, 250, 251, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body class="bg-background-light font-display antialiased min-h-screen relative text-text-main overflow-x-hidden">
+    <header class="glass-header sticky top-0 z-40 w-full px-6 py-4 border-b border-transparent">
+      <div class="flex items-center justify-between">
+        <div class="flex flex-col">
+          <span class="text-text-muted text-sm font-medium tracking-wide uppercase">Tuesday, Oct 24</span>
+          <h1 class="text-2xl font-bold tracking-tight">Good Morning, Alex</h1>
+        </div>
+      </div>
+    </header>
+
+    <main class="px-6 pb-24 pt-6 max-w-lg mx-auto">
+      <section class="mb-8">
+        <div class="bg-surface rounded-lg p-5 shadow-soft hover:shadow-md transition-shadow duration-300 cursor-pointer group relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div class="relative z-10 flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1 text-primary">
+              <span class="material-symbols-outlined text-[28px]">lightbulb_circle</span>
+            </div>
+            <div class="flex-1">
+              <h2 class="text-lg font-bold leading-tight">Resume your 'Q3 Strategy' draft?</h2>
+              <p class="text-text-muted text-sm mb-4">You were brainstorming marketing channels. Last edited 2h ago.</p>
+              <button class="text-primary font-semibold text-sm hover:underline flex items-center gap-1">
+                Resume Draft
+                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">Recent Thoughts</h3>
+      </div>
+
+      <div class="masonry-grid">
+        <article class="masonry-item bg-surface rounded-lg p-4 shadow-soft">
+          <h4 class="font-bold text-[17px] mb-2">Marketing Launch</h4>
+          <p class="text-text-muted text-[15px] leading-relaxed line-clamp-3">
+            Channels to explore: LinkedIn for B2B, maybe a Twitter thread for the community aspect.
+          </p>
+        </article>
+        <article class="masonry-item bg-surface rounded-lg p-4 shadow-soft">
+          <h4 class="font-bold text-[17px] mb-2">Book Notes: Atomic Habits</h4>
+          <p class="text-text-muted text-[15px] leading-relaxed line-clamp-4">
+            1% better every day leads to massive results over time.
+          </p>
+        </article>
+      </div>
+    </main>
+
+    <button class="fixed bottom-6 right-6 z-50 group focus:outline-none">
+      <div class="absolute inset-0 rounded-full bg-primary/30 animate-ping opacity-75"></div>
+      <div class="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary-light shadow-float text-white animate-breathe transition-transform hover:scale-110 active:scale-95">
+        <span class="material-symbols-outlined text-[28px]">spark</span>
+      </div>
+    </button>
+  </body>
+</html>

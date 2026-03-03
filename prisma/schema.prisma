@@ -7,75 +7,306 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//
+// ENUMS
+//
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum MemoryRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+enum QueryStatus {
+  RECEIVED
+  CONTEXT_READY
+  COMPLETED
+  FAILED
+}
+
+//
+// CORE TENANCY
+//
+
 model Tenant {
   id        String   @id @default(uuid())
   name      String
+  slug      String?  @unique // staged rollout: nullable first, backfill, then enforce NOT NULL
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   users     User[]
   threads   Thread[]
-  memories  Memory[]
+  memories            Memory[]
+  agentTasks          AgentTask[]
+  taskSteps           TaskStep[]
+  toolExecutions      ToolExecution[]
+  longTermMemories    LongTermMemory[]
+  longTermMemoryLinks LongTermMemoryLink[]
 }
+
+//////////////////////////////////////////////////////
+// USER
+//////////////////////////////////////////////////////
 
 model User {
   id        String   @id @default(uuid())
   tenantId  String
-  email     String   @unique
+  email     String
+  role      UserRole @default(MEMBER)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
 }
 
-model Thread {
-  id        String   @id @default(uuid())
-  tenantId  String
-  summary   String?
-  createdAt DateTime @default(now())
+//
+// THREAD & MEMORY LAYER
+//
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+model Thread {
+  id         String   @id @default(uuid())
+  tenantId   String
+  title      String?
+  summary    String?
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   memories Memory[]
+
+  @@index([tenantId])
 }
 
 model Memory {
-  id        String   @id @default(uuid())
-  tenantId  String
-  threadId  String
-  role      String
-  content   String
-  embedding Bytes?   // pgvector stored via raw SQL
-  createdAt DateTime @default(now())
+  id         String     @id @default(uuid())
+  tenantId   String
+  threadId   String
+  role       MemoryRole
+  content    String
+  tokenCount Int?
+  metadata   Json?
+  embedding  Bytes?     // actual vector column added via SQL migration
+  isEmbedded Boolean    @default(false)
+  isIndexed  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  thread Thread @relation(fields: [threadId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([threadId])
+  @@index([tenantId, createdAt])
 }
 
-model Outbox {
-  id        String   @id @default(uuid())
-  topic     String
-  key       String
-  payload   Json
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([published])
-}
+//
+// QUERY LIFECYCLE (RAG REQUEST FLOW)
+//
 
 model QueryRequest {
-  id        String   @id @default(uuid())
-  tenantId  String
-  userId    String
-  query     String
-  createdAt DateTime @default(now())
+  id           String      @id @default(uuid())
+  tenantId     String
+  userId       String
+  query        String
+  status       QueryStatus @default(RECEIVED)
+  tokenUsage   Int?
+  errorMessage String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  response QueryResponse?
 
   @@index([tenantId])
+  @@index([tenantId, status])
 }
 
 model QueryResponse {
+  id         String   @id @default(uuid())
+  requestId  String   @unique
+  response   String
+  model      String?
+  tokenUsage Int?
+  createdAt  DateTime @default(now())
+
+  request QueryRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+//
+// OUTBOX PATTERN (Exactly-Once Event Publishing)
+//
+
+model OutboxEvent {
+  id          String       @id @default(uuid())
+  topic       String
+  key         String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  retryCount  Int          @default(0)
+  lastError   String?
+  createdAt   DateTime     @default(now())
+  publishedAt DateTime?
+
+  @@index([status])
+  @@index([topic])
+}
+
+//
+// OPTIONAL: AUDIT / OBSERVABILITY
+//
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String?
+  entityType String
+  entityId   String
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum StepStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum MemorySourceType {
+  NOTE
+  TASK
+  THREAD
+}
+
+model AgentTask {
+  id           String      @id @default(uuid())
+  tenantId     String
+  sessionId    String
+  goal         String
+  status       TaskStatus  @default(PENDING)
+  totalCostUsd Decimal     @default(0) @db.Decimal(10, 4)
+  createdAt    DateTime    @default(now())
+  completedAt  DateTime?
+
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  steps        TaskStep[]
+  executions   ToolExecution[]
+  memoryLinks  LongTermMemoryLink[]
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+model TaskStep {
+  id           String      @id @default(uuid())
+  tenantId      String
+  taskId        String
+  stepIndex     Int
+  actionName    String
+  inputPayload  Json
+  outputPayload Json?
+  status        StepStatus @default(PENDING)
+  errorMessage  String?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime   @default(now())
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id])
+  task        AgentTask        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  executions  ToolExecution[]
+
+  @@unique([taskId, stepIndex])
+  @@index([tenantId])
+  @@index([taskId, status])
+}
+
+model ToolExecution {
+  id           String    @id @default(uuid())
+  tenantId      String
+  taskId        String
+  stepId        String
+  toolName      String
+  parameters    Json
+  result        Json
+  success       Boolean
+  errorMessage  String?
+  latencyMs     Int
+  costUsd       Decimal   @default(0) @db.Decimal(10, 4)
+  createdAt     DateTime  @default(now())
+
+  tenant  Tenant    @relation(fields: [tenantId], references: [id])
+  task  AgentTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  step  TaskStep  @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([taskId])
+  @@index([stepId])
+  @@index([toolName])
+}
+
+model LongTermMemory {
+  id          String           @id @default(uuid())
+  tenantId    String
+  userId      String
+  sourceType  MemorySourceType
+  sourceId    String
+  embeddingId String
+  summary     String
+  createdAt   DateTime         @default(now())
+
+  tenant     Tenant             @relation(fields: [tenantId], references: [id])
+  links      LongTermMemoryLink[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([sourceType, sourceId])
+}
+
+model LongTermMemoryLink {
   id        String   @id @default(uuid())
-  requestId String   @unique
-  response  String
-  createdAt DateTime @default(now())
+  tenantId   String
+  taskId     String
+  memoryId   String
+  createdAt  DateTime @default(now())
+
+  tenant  Tenant         @relation(fields: [tenantId], references: [id])
+  task    AgentTask      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  memory  LongTermMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, memoryId])
+  @@index([tenantId])
+  @@index([memoryId])
 }

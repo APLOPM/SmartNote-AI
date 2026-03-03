@@ -1,6 +1,8 @@
-# RAG Event-Driven Memory Platform
+# SmartNote-AI: RAG Event-Driven Memory Platform
 
-## Short Description
+> **Status:** This repository is currently architecture-first (contract and platform blueprint). It defines production constraints, data flow, and deployment baseline for implementation teams.
+
+## Overview
 
 Production-grade RAG architecture built on:
 - Node.js services
@@ -14,7 +16,150 @@ Production-grade RAG architecture built on:
 This repository defines the structural contract of the system.
 All implementations MUST follow this topology and data flow.
 
-## Long Description
+## Repository Contents
+
+- `README.md` — system architecture contract and operations baseline
+- `docs/` — deep technical specifications and design references
+- `docs/ai-ux-design-system-th.md` — UX design baseline for Chat, Editor, Dashboard, Search, and Agent transparency
+- `prisma/schema.prisma` — core data model baseline
+- `sql/` — SQL scripts (pgvector + operational rollouts)
+- `k8s/` — Kubernetes manifests for autoscaling and CI/CD deployment flow
+
+## Quick Start (Local Reference Environment)
+
+This project includes `docker-compose.yml` for standing up local infrastructure dependencies.
+
+```bash
+docker compose up -d
+```
+
+Recommended next steps:
+
+1. Initialize PostgreSQL extensions (`pgvector`) via scripts in `sql/`.
+2. Apply Prisma migrations/schema for your service implementation.
+3. Start service workers and verify Kafka topic provisioning matches the contract below.
+
+> Note: Service code may be introduced incrementally, but event naming, outbox rules, and tenant isolation MUST remain compatible with this README contract.
+
+
+## UX Specification Baseline (Always Included)
+
+To keep implementation aligned with product UX expectations, every feature proposal and release checklist MUST include these UX references:
+
+- `docs/ai-ux-design-system-th.md` (design tokens, interaction rules, accessibility, AI Safety UX Standard A, and Hybrid modes: Serene/Nova)
+- `docs/smartnote-serene-dashboard-mockup.html` (dashboard UX baseline)
+- `docs/smartnote-serene-search-mockup.html` (search UX baseline)
+- `docs/editor-ui-mockup.html` (editor UX baseline)
+
+### Hybrid UX Modes (Shared DNA)
+
+SmartNote now defines 2 user-selectable UX modes under one core design system:
+
+- **Serene**: minimal + friendly visual language (light surfaces, calm cards, human-like AI tone).
+- **Nova**: tech productivity visual language (dark terminal-like feel, high-signal metrics, command-style interaction).
+
+Both modes MUST share typography, spacing grid, iconography baseline, AI safety controls, and bilingual TH/EN quality gates.
+
+## AI Safety UX Requirements (Baseline)
+
+Release candidates MUST preserve minimum UX safety controls for AI-driven flows:
+
+- Always show explicit **Risk Notice / Human Confirmation / Audit Clarity** for sensitive actions.
+- Keep **Source Transparency** visible and avoid hidden destructive automation.
+- Ensure fallback and recovery states (`Retry`, clear error copy, and non-blocking exits) exist for every AI workflow.
+
+## Thai + English UX Baseline
+
+เพื่อรองรับผู้ใช้ภาษาไทยและอังกฤษ ทีมต้องรักษาความสอดคล้องของข้อความ UX หลัก (เช่น onboarding, empty states, confirmation dialogs, search hints) ให้เป็นสองภาษาในระดับ baseline เดียวกัน โดยอย่างน้อยต้อง:
+
+- รักษาความหมายของคำเตือนด้านความปลอดภัย AI ให้ตรงกันทั้งไทยและอังกฤษ
+- ใช้โทนภาษาที่เป็นมิตรและชัดเจนเหมือนกันในทั้งสองภาษา
+- อัปเดต mockup/spec เมื่อมีการเปลี่ยนแปลง copy หรือ interaction ที่ส่งผลต่อผู้ใช้
+
+### Standardized Large-Screen UX Requirements
+
+Use proven responsive patterns so users get a consistent experience across **tablets, foldables, ChromeOS devices, and all phone sizes**:
+
+- Prefer adaptive layouts with clear breakpoints and stable information hierarchy for expanded screens.
+- Use standard navigation components (`NavigationRail`, `NavigationDrawer`, or equivalent web patterns) to keep navigation discoverable but uncluttered.
+- Keep primary content focused while secondary actions move into drawers/panels to reduce UI noise.
+- Ensure keyboard and pointer workflows remain first-class on large-screen and ChromeOS form factors.
+- Validate accessibility basics (focus order, contrast, touch target size, and responsive text scaling) for each layout mode.
+
+
+### UX Documentation Governance (Required)
+
+ทุกการเปลี่ยนแปลงด้าน workflow, dependency, หรือ UI ที่กระทบประสบการณ์ผู้ใช้ ต้องอัปเดตเอกสาร UX baseline ให้สอดคล้องกันทันที โดยเฉพาะ `docs/ai-ux-design-system-th.md`, `docs/editor-ui-mockup.html`, และ `docs/smartnote-serene-search-mockup.html`.
+
+CI ใน `.github/workflows/ci.yml` บังคับตรวจสอบ marker สำคัญของ Standard A (เช่น Design Tokens และ Human Confirmation) เพื่อให้การรีลีสยังคงมาตรฐาน UX ความปลอดภัยขั้นต่ำ.
+
+### UX Review Gate in CI
+
+CI now validates that the baseline UX documents above remain present and that this README continues to declare the UX baseline section. This acts as a minimum guardrail when workflows or architecture contracts are updated.
+
+When updating architecture, workflows, or service contracts, add a UX impact note in the related PR description and verify these docs remain current.
+
+### Bilingual Conversational UX Baseline (TH/EN)
+
+To align with the Event-Driven RAG assistant behavior, onboarding and re-engagement flows must include the following:
+
+- **Progressive Disclosure (Benefit-first):** Start with short, outcome-focused responses; reveal technical details only when requested.
+- **Contextual Awareness (2-3 day return):** If a user has been inactive for 2-3 days, summarize unfinished work before asking for next action.
+  - TH example: `ยินดีที่ได้พบกันอีกครั้งครับ เมื่อวันก่อนเราค้างเรื่องแผนการตลาด Q3 ไว้ คุณอยากดูต่อไหมครับ?`
+  - EN example: `Welcome back. Last time we paused on the Q3 marketing plan—would you like to continue from there?`
+- **Privacy Assurance (Standard A):** End onboarding with an explicit trust statement.
+  - TH required line: `ข้อมูลของคุณปลอดภัยและเป็นส่วนตัวที่สุด ผมจะเรียนรู้และเติบโตไปพร้อมกับคุณคนเดียวเท่านั้นครับ`
+  - EN equivalent: `Your data is secure and private. I learn and improve only for your experience.`
+
+These markers are enforced by CI to keep Thai/English UX and safety posture consistent across releases.
+
+
+## Google Cloud SDK Installation (for Stitch Authentication)
+
+If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
+
+### Standalone Install
+
+```bash
+# Download and install (simplified for standard environments)
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL
+
+# Set local configuration to avoid prompts
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+```
+
+### Homebrew Install (macOS)
+
+```bash
+brew install --cask google-cloud-sdk
+
+# Set local configuration to avoid prompts
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+```
+
+
+
+## CI Stability for Workflow, Dependency, and UX Guardrails
+
+CI is configured to remain resilient when transient failures occur:
+
+- Dependency validation and workflow health checks are required baseline gates.
+- Build matrix jobs use retry logic for install/lint/test/build/prisma validation to reduce flaky failures.
+- Backoff timing is centralized in CI environment variables so reliability can be tuned without changing each command.
+- UX baseline checks remain mandatory to enforce safety markers and bilingual documentation continuity.
+
+This repository treats CI stability and UX safety controls as release-blocking quality standards.
+
+## CI Prerequisites (Security & Dependency Review)
+
+To keep pull request checks stable and actionable:
+
+- Enable **Dependency graph** in repository settings: `Settings > Security > Security analysis`.
+- Keep `dependency-review` workflow enabled for PRs to detect risky dependency changes when support is available.
+- If Dependency graph is disabled, CI will skip dependency review with a notice and link to enablement instructions.
+
+## System Intent
 
 This application implements a fully event-driven Retrieval-Augmented Generation (RAG) system designed for:
 
@@ -117,6 +262,19 @@ Retrieval optimized for:
 - Kafka key design
 - pgvector index strategy
 
+## Implementation Checklist
+
+Use this checklist before promoting any environment:
+
+- [ ] API writes domain data + outbox in a single transaction
+- [ ] Outbox publisher is idempotent and retriable
+- [ ] Consumers use manual commits and are replay-safe
+- [ ] All read/write paths include `tenant_id`
+- [ ] Kafka keys include tenant scope
+- [ ] DLQ (`memory.failed`) is configured and monitored
+- [ ] Vector queries include tenant filter and index tuning
+- [ ] Autoscaling limits are aligned with partition counts
+
 ## Deployment Model
 
 - Docker-based
@@ -124,6 +282,25 @@ Retrieval optimized for:
 - Stateless services
 - Externalized configuration
 - Observability mandatory
+
+## Recommended Observability Baseline
+
+- Traces: request lifecycle across API → Kafka → workers
+- Metrics: consumer lag, per-topic throughput, retry count, DLQ rate
+- DB metrics: write latency, lock waits, vector query latency, replica lag
+- Logs: structured JSON logs with `tenantId`, `memoryId`, `queryId`, `eventType`
+
+## Documentation Map
+
+Key references for implementers:
+
+- `docs/production-rag-kafka-node-prisma-postgres.md`
+- `docs/background-queue-worker-and-kafka-rag.md`
+- `docs/agent-memory-layer-er.md`
+- `docs/smartnote-ai-technical-spec-th.md`
+- `docs/smartnote-ai-product-overview-th.md`
+- `docs/codebase-audit-fix-proposals-th.md`
+- `docs/self-hosted-runner-guide-th.md`
 
 This document defines architectural boundaries.
 All contributors must comply.
