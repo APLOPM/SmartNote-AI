@@ -1,0 +1,24 @@
+name: self-hosted-runner-smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-runner:
+    name: Verify self-hosted runner availability
+    runs-on: [self-hosted, windows, x64, smartnote]
+    steps:
+      - name: Print runner info
+        shell: pwsh
+        run: |
+          Write-Host "Runner: $env:RUNNER_NAME"
+          Write-Host "OS: $env:RUNNER_OS"
+          Write-Host "Arch: $env:RUNNER_ARCH"
+
+      - name: Validate workspace
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:GITHUB_WORKSPACE")) {
+            throw "GITHUB_WORKSPACE not found"
+          }
+          Write-Host "Workspace ready: $env:GITHUB_WORKSPACE"
