@@ -7,7 +7,6 @@ import {
 import { ToolService } from "../services/tool.service";
 
 type AgentRunOptions = {
-  tenantId?: string;
   taskId?: string;
   maxSteps?: number;
 };
@@ -23,7 +22,6 @@ export class AgentExecutor {
   private readonly toolService = new ToolService();
 
   async run(goal: string, options: AgentRunOptions = {}): Promise<AgentRunResult> {
-    const tenantId = options.tenantId ?? "tenant-id";
     const taskId = options.taskId ?? "task-id";
     const maxSteps = options.maxSteps ?? 10;
 
@@ -67,6 +65,10 @@ export class AgentExecutor {
         };
       }
 
+      if (stepCount >= maxSteps) {
+        throw new Error(`Max steps exceeded (${maxSteps}) before executing tool calls`);
+      }
+
       for (const toolCall of message.tool_calls) {
         const functionName = toolCall.function.name as SupportedToolName;
         const stepId = `${taskId}-step-${stepCount}`;
@@ -77,7 +79,6 @@ export class AgentExecutor {
         );
 
         const result = await this.toolService.executeTool(
-          tenantId,
           taskId,
           stepId,
           functionName,

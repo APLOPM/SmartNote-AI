@@ -1,96 +1,50 @@
-import { prisma } from '../prisma'
-
-export type ToolExecutionResult = {
-  output: Record<string, unknown>
-  costUsd: number
-}
+import type {
+  CreateDocumentArgs,
+  SummarizeNoteArgs,
+  SupportedToolName,
+} from "../llm/tool.registry";
 
 export class ToolService {
   async executeTool(
-    tenantId: string,
     taskId: string,
     stepId: string,
-    toolName: string,
-    parameters: Record<string, unknown>
-  ): Promise<ToolExecutionResult> {
-    const startedAt = Date.now()
-
-    try {
-      let result: Record<string, unknown>
-
-      switch (toolName) {
-        case 'summarize_note':
-          result = await this.summarize(parameters)
-          break
-        case 'create_document':
-          result = await this.createDoc(parameters)
-          break
-        default:
-          throw new Error(`Unknown tool: ${toolName}`)
-      }
-
-      const costUsd = this.estimateCostUsd(toolName, parameters, result)
-
-      await prisma.toolExecution.create({
-        data: {
-          tenantId,
-          taskId,
-          stepId,
-          toolName,
-          parameters,
-          result,
-          success: true,
-          latencyMs: Date.now() - startedAt,
-          costUsd
-        }
-      })
-
-      return {
-        output: result,
-        costUsd
-      }
-    } catch (error) {
-      await prisma.toolExecution.create({
-        data: {
-          tenantId,
-          taskId,
-          stepId,
-          toolName,
-          parameters,
-          result: {},
-          success: false,
-          errorMessage: error instanceof Error ? error.message : 'Unknown tool error',
-          latencyMs: Date.now() - startedAt
-        }
-      })
-
-      throw error
-    }
-  }
-
-  private async summarize(_input: Record<string, unknown>) {
-    return { summary: 'Summarized content...' }
-  }
-
-  private async createDoc(_input: Record<string, unknown>) {
-    return { fileUrl: 'https://cdn.smartnote.ai/doc/123' }
-  }
-
-  private estimateCostUsd(
-    toolName: string,
-    parameters: Record<string, unknown>,
-    result: Record<string, unknown>
+    toolName: SupportedToolName,
+    parameters: SummarizeNoteArgs | CreateDocumentArgs,
   ) {
-    const payloadSize = JSON.stringify(parameters).length + JSON.stringify(result).length
+    switch (toolName) {
+      case "summarize_note": {
+        const input = parameters as SummarizeNoteArgs;
+        const summary = input.text
+          .split(/\n+/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .slice(0, 5)
+          .map((line) => `• ${line}`)
+          .join("\n");
 
-    if (toolName === 'summarize_note') {
-      return Number((0.0001 + payloadSize * 0.000001).toFixed(4))
+        return {
+          taskId,
+          stepId,
+          toolName,
+          summary: summary || "• ไม่มีข้อมูลเพียงพอสำหรับการสรุป",
+        };
+      }
+
+      case "create_document": {
+        const input = parameters as CreateDocumentArgs;
+
+        return {
+          taskId,
+          stepId,
+          toolName,
+          fileUrl: `https://cdn.smartnote.ai/generated/${encodeURIComponent(input.title)}.${input.format}`,
+          title: input.title,
+          format: input.format,
+        };
+      }
+
+      default:
+        throw new Error(`Unknown tool: ${toolName}`);
     }
-
-    if (toolName === 'create_document') {
-      return Number((0.0002 + payloadSize * 0.0000005).toFixed(4))
-    }
-
-    return 0
   }
 }
