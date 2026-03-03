@@ -192,3 +192,10 @@ This repository now includes a production-ready CI/CD baseline for monorepo, mul
 - Rollback is a single command (`kubectl rollout undo`).
 - No manual DB edits.
 - No direct production DB access.
+
+## Additional Architecture Reference
+
+- `docs/background-queue-worker-and-kafka-rag.md`
+  - Background Worker (BullMQ + Redis) implementation pattern
+  - Event-driven RAG retrieval pipeline (Kafka-based)
+  - Hybrid migration path from queue worker to full Kafka backbone
