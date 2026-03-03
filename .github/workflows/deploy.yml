@@ -15,6 +15,9 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
+    env:
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -32,14 +35,16 @@ jobs:
 
       - name: Run migration job (before rollout)
         run: |
-          kubectl apply -f k8s/cicd/prisma-migrate-job.yaml
+          kubectl delete job prisma-migrate --ignore-not-found=true
+          API_IMAGE="$IMAGE_PREFIX/api:$DEPLOY_SHA"
+          sed "s|__API_IMAGE__|$API_IMAGE|g" k8s/cicd/prisma-migrate-job.yaml | kubectl apply -f -
           kubectl wait --for=condition=complete --timeout=300s job/prisma-migrate
 
       - name: Set image tags (immutable SHA only)
         run: |
           for svc in api embedding retrieval llm outbox; do
             kubectl set image deployment/$svc \
-              $svc=$IMAGE_PREFIX/$svc:${{ github.sha }}
+              $svc=$IMAGE_PREFIX/$svc:$DEPLOY_SHA
           done
 
       - name: Wait rollout
@@ -51,7 +56,7 @@ jobs:
       - name: Smoke test (API + DB + Kafka)
         run: |
           kubectl run smoke-test \
-            --image=$IMAGE_PREFIX/api:${{ github.sha }} \
+            --image=$IMAGE_PREFIX/api:$DEPLOY_SHA \
             --restart=Never \
             --rm -i \
             --command -- npm run smoke:test
