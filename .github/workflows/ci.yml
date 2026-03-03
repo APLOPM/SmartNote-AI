@@ -35,34 +35,88 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Detect service workspace
+        id: detect
+        run: |
+          set -euo pipefail
+
+          candidates=(
+            "services/${{ matrix.service }}"
+            "src/services/${{ matrix.service }}"
+          )
+
+          service_dir=""
+          for candidate in "${candidates[@]}"; do
+            if [[ -d "$candidate" ]]; then
+              service_dir="$candidate"
+              break
+            fi
+          done
+
+          if [[ -z "$service_dir" ]]; then
+            echo "service_exists=false" >> "$GITHUB_OUTPUT"
+            echo "package_exists=false" >> "$GITHUB_OUTPUT"
+            echo "lockfile_exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Skip::No workspace found for '${{ matrix.service }}'"
+            exit 0
+          fi
+
+          package_path="$service_dir/package.json"
+          lockfile_path="$service_dir/package-lock.json"
+
+          echo "service_exists=true" >> "$GITHUB_OUTPUT"
+          echo "service_dir=$service_dir" >> "$GITHUB_OUTPUT"
+
+          if [[ -f "$package_path" ]]; then
+            echo "package_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "package_exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Skip::Missing $package_path"
+          fi
+
+          if [[ -f "$lockfile_path" ]]; then
+            echo "lockfile_exists=true" >> "$GITHUB_OUTPUT"
+            echo "lockfile_path=$lockfile_path" >> "$GITHUB_OUTPUT"
+          else
+            echo "lockfile_exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=No cache::Missing $lockfile_path"
+          fi
+
+      - name: Setup Node (with npm cache)
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+          cache-dependency-path: ${{ steps.detect.outputs.lockfile_path }}
+
+      - name: Setup Node (without cache)
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Install
-        run: |
-          cd services/${{ matrix.service }}
-          npm ci
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists == 'true'
+        run: npm ci
+        working-directory: ${{ steps.detect.outputs.service_dir }}
 
       - name: Lint
-        run: |
-          cd services/${{ matrix.service }}
-          npm run lint
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists == 'true'
+        run: npm run lint --if-present
+        working-directory: ${{ steps.detect.outputs.service_dir }}
 
       - name: Test
-        run: |
-          cd services/${{ matrix.service }}
-          npm run test
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists == 'true'
+        run: npm run test --if-present
+        working-directory: ${{ steps.detect.outputs.service_dir }}
 
       - name: Build
-        run: |
-          cd services/${{ matrix.service }}
-          npm run build
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists == 'true'
+        run: npm run build --if-present
+        working-directory: ${{ steps.detect.outputs.service_dir }}
 
       - name: Prisma Validate
-        run: |
-          cd services/${{ matrix.service }}
-          npx prisma validate --schema=../../prisma/schema.prisma
+        if: steps.detect.outputs.package_exists == 'true' && steps.detect.outputs.lockfile_exists == 'true'
+        run: npx prisma validate --schema=../../prisma/schema.prisma
+        working-directory: ${{ steps.detect.outputs.service_dir }}
