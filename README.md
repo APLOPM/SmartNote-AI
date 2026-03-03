@@ -74,6 +74,21 @@ CI now validates that the baseline UX documents above remain present and that th
 
 When updating architecture, workflows, or service contracts, add a UX impact note in the related PR description and verify these docs remain current.
 
+### Bilingual Conversational UX Baseline (TH/EN)
+
+To align with the Event-Driven RAG assistant behavior, onboarding and re-engagement flows must include the following:
+
+- **Progressive Disclosure (Benefit-first):** Start with short, outcome-focused responses; reveal technical details only when requested.
+- **Contextual Awareness (2-3 day return):** If a user has been inactive for 2-3 days, summarize unfinished work before asking for next action.
+  - TH example: `ยินดีที่ได้พบกันอีกครั้งครับ เมื่อวันก่อนเราค้างเรื่องแผนการตลาด Q3 ไว้ คุณอยากดูต่อไหมครับ?`
+  - EN example: `Welcome back. Last time we paused on the Q3 marketing plan—would you like to continue from there?`
+- **Privacy Assurance (Standard A):** End onboarding with an explicit trust statement.
+  - TH required line: `ข้อมูลของคุณปลอดภัยและเป็นส่วนตัวที่สุด ผมจะเรียนรู้และเติบโตไปพร้อมกับคุณคนเดียวเท่านั้นครับ`
+  - EN equivalent: `Your data is secure and private. I learn and improve only for your experience.`
+
+These markers are enforced by CI to keep Thai/English UX and safety posture consistent across releases.
+
+
 ## Google Cloud SDK Installation (for Stitch Authentication)
 
 If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.

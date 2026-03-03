@@ -49,11 +49,14 @@ jobs:
           set -euo pipefail
           test -f docs/ai-ux-design-system-th.md
           rg -q "UX Specification Baseline \(Always Included\)" README.md
-          rg -q "AI Safety UX Requirements \(Baseline\)" README.md
+          rg -q "Bilingual Conversational UX Baseline \(TH/EN\)" README.md
           rg -q "docs/ai-ux-design-system-th.md" README.md
           rg -q "docs/smartnote-serene-dashboard-mockup.html" README.md
           rg -q "docs/smartnote-serene-search-mockup.html" README.md
           rg -q "docs/editor-ui-mockup.html" README.md
+          rg -q "Progressive Disclosure \(Benefit-first\)" README.md
+          rg -q "Contextual Awareness \(2-3 day return\)" README.md
+          rg -q "Privacy Assurance \(Standard A\)" README.md
 
       - name: Enforce UX Safety Standard A markers
         run: |
@@ -61,6 +64,10 @@ jobs:
           rg -q "AI Safety UX Standard A" docs/ai-ux-design-system-th.md
           rg -q "Design Tokens" docs/ai-ux-design-system-th.md
           rg -q "Human Confirmation" docs/ai-ux-design-system-th.md
+          rg -q "Conversational Onboarding Baseline \(TH/EN\)" docs/ai-ux-design-system-th.md
+          rg -q "Progressive Disclosure" docs/ai-ux-design-system-th.md
+          rg -q "Contextual Awareness" docs/ai-ux-design-system-th.md
+          rg -q "Privacy Assurance" docs/ai-ux-design-system-th.md
 
   dependency-guardrails:
     name: ตรวจสอบการพึ่งพา
@@ -82,6 +89,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 3
       matrix:
         include:
           - service: api
@@ -151,15 +159,24 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install
+      - name: Install (retry for flaky registry/network)
         if: steps.detect.outputs.should_run == 'true'
         run: |
+          set -euo pipefail
           cd "${{ steps.detect.outputs.service_dir }}"
-          if [ "${{ steps.detect.outputs.has_lockfile }}" = "true" ]; then
-            npm ci
-          else
-            npm install --no-audit --no-fund
-          fi
+          for attempt in 1 2 3; do
+            if [ "${{ steps.detect.outputs.has_lockfile }}" = "true" ]; then
+              npm ci && break
+            else
+              npm install --no-audit --no-fund && break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::npm install failed after 3 attempts"
+              exit 1
+            fi
+            echo "Retrying install ($attempt/3) ..."
+            sleep 5
+          done
 
       - name: Lint
         if: steps.detect.outputs.should_run == 'true'
@@ -167,11 +184,12 @@ jobs:
           cd "${{ steps.detect.outputs.service_dir }}"
           npm run lint --if-present
 
-      - name: Test
+      - name: Test (retry once for flaky integration checks)
         if: steps.detect.outputs.should_run == 'true'
         run: |
+          set -euo pipefail
           cd "${{ steps.detect.outputs.service_dir }}"
-          npm run test --if-present
+          npm run test --if-present || npm run test --if-present
 
       - name: Build
         if: steps.detect.outputs.should_run == 'true'

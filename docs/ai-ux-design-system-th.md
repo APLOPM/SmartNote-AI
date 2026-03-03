@@ -149,10 +149,34 @@
 
 ---
 
-## 8) Governance
+
+## 8) Conversational Onboarding Baseline (TH/EN)
+
+### 8.1 Progressive Disclosure
+- ช่วงแรกของบทสนทนาให้ตอบสั้น กระชับ และโฟกัส **ผลลัพธ์ที่ผู้ใช้จะได้ (Benefit-first)** มากกว่าการอธิบายเทคโนโลยี
+- หากผู้ใช้ต้องการรายละเอียดเชิงเทคนิค ค่อยเปิดเผยรายละเอียดเพิ่มเป็นลำดับชั้น
+- English baseline: start with concise, benefit-first responses before exposing implementation details.
+
+### 8.2 Contextual Awareness (Re-engagement 2-3 days)
+- หากระบบตรวจพบว่าผู้ใช้ไม่ได้เข้าใช้งาน 2-3 วัน เมื่อผู้ใช้กลับมาให้สรุปงานค้างทันทีแบบสั้น
+- ตัวอย่าง TH: `ยินดีที่ได้พบกันอีกครั้งครับ เมื่อวันก่อนเราค้างเรื่องแผนการตลาด Q3 ไว้ คุณอยากดูต่อไหมครับ?`
+- Example EN: `Welcome back. Last time we paused on the Q3 marketing plan—would you like to continue from there?`
+- ต้องเปิดโอกาสให้ผู้ใช้ข้าม/เปลี่ยนหัวข้อได้ทันที
+
+### 8.3 Privacy Assurance (Standard A Trust Line)
+- ตอนท้าย onboarding ต้องมีข้อความยืนยันความเป็นส่วนตัวอย่างน้อยหนึ่งบรรทัด
+- ข้อความบังคับ TH: `ข้อมูลของคุณปลอดภัยและเป็นส่วนตัวที่สุด ผมจะเรียนรู้และเติบโตไปพร้อมกับคุณคนเดียวเท่านั้นครับ`
+- Required EN equivalent: `Your data is secure and private. I learn and improve only for your experience.`
+- ข้อความนี้ต้องแสดงใน flow เริ่มต้นใช้งานและถูกทดสอบโดย CI marker
+
+---
+
+## 9) Governance
 
 หากแก้ token หรือ interaction rule ต้องอัปเดตพร้อมกันทั้ง:
 1. `docs/editor-ui-mockup.html`
 2. `docs/smartnote-serene-search-mockup.html`
 3. `README.md` ส่วน UX baseline
 4. CI gate ที่เกี่ยวข้อง
+5. ข้อกำหนด Conversational Onboarding (TH/EN) และ Privacy Assurance
+
