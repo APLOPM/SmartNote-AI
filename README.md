@@ -127,3 +127,44 @@ Retrieval optimized for:
 
 This document defines architectural boundaries.
 All contributors must comply.
+
+## Production Autoscaling Configuration (Kafka Consumer Lag)
+
+Recommended autoscaling strategy for Kubernetes + Kafka-based RAG services:
+
+- Primary signal: Kafka consumer lag
+- Secondary protection: CPU-based scaling (for non-lag-driven services like LLM orchestrator)
+- Guardrail: `maxReplicaCount <= topic partitions`
+- Stability: cooldown + scale-down stabilization window
+
+### KEDA Installation
+
+```bash
+helm repo add kedacore https://kedacore.github.io/charts
+helm install keda kedacore/keda --namespace keda --create-namespace
+```
+
+### Included Manifests
+
+- `k8s/autoscaling/keda-kafka-autoscaling.yaml`
+  - Embedding scaler (`memory.ingested`, lagThreshold=500, maxReplicaCount=24)
+  - Retrieval scaler (`query.request`, lagThreshold=200, maxReplicaCount=48)
+- `k8s/autoscaling/deployments-resources-and-rollout.yaml`
+  - Rolling update guardrails and CPU/memory requests-limits
+- `k8s/autoscaling/hpa-llm-cpu-rps.yaml`
+  - LLM orchestrator HPA based on CPU + RPS
+- `k8s/autoscaling/alerts-prometheus-rules.yaml`
+  - Alerts for high lag, rebalance frequency, and max replica saturation
+
+### Partition Planning Rule
+
+Always ensure:
+
+- `partitions >= maxReplicaCount`
+- Example: peak ingest 20k events/min and 1 pod handles 1k events/min means at least 20 partitions and max replicas >= 20.
+
+### Operational Recommendations
+
+- Keep manual offset commits and idempotent processing.
+- Add graceful shutdown hooks so consumers commit/disconnect on SIGTERM.
+- Monitor lag, partition skew, rebalance frequency, per-message processing latency, DB write latency, and vector insert latency.
