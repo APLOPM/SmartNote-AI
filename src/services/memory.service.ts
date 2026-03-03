@@ -2,9 +2,10 @@ import { MemorySourceType } from '@prisma/client'
 import { prisma } from '../prisma'
 
 export class MemoryService {
-  async linkMemory(taskId: string, memoryId: string) {
+  async linkMemory(tenantId: string, taskId: string, memoryId: string) {
     return prisma.longTermMemoryLink.create({
       data: {
+        tenantId,
         taskId,
         memoryId
       }
@@ -12,6 +13,7 @@ export class MemoryService {
   }
 
   async storeLongTermMemory(
+    tenantId: string,
     userId: string,
     sourceType: MemorySourceType,
     sourceId: string,
@@ -20,6 +22,7 @@ export class MemoryService {
   ) {
     return prisma.longTermMemory.create({
       data: {
+        tenantId,
         userId,
         sourceType,
         sourceId,

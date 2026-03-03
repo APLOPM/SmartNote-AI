@@ -12,9 +12,10 @@ const MAX_STEPS = 100
 export class TaskService {
   private toolService = new ToolService()
 
-  async createTask(sessionId: string, goal: string) {
+  async createTask(tenantId: string, sessionId: string, goal: string) {
     return prisma.agentTask.create({
       data: {
+        tenantId,
         sessionId,
         goal,
         status: TaskStatus.RUNNING
@@ -22,13 +23,14 @@ export class TaskService {
     })
   }
 
-  async initializeSteps(taskId: string, steps: StepInput[]) {
+  async initializeSteps(tenantId: string, taskId: string, steps: StepInput[]) {
     if (steps.length > MAX_STEPS) {
       throw new Error(`Plan exceeds maximum allowed steps (${MAX_STEPS})`)
     }
 
     await prisma.taskStep.createMany({
       data: steps.map((step, index) => ({
+        tenantId,
         taskId,
         stepIndex: index,
         actionName: step.action,
@@ -38,9 +40,9 @@ export class TaskService {
     })
   }
 
-  async executeTask(taskId: string) {
-    const task = await prisma.agentTask.findUnique({
-      where: { id: taskId },
+  async executeTask(tenantId: string, taskId: string) {
+    const task = await prisma.agentTask.findFirst({
+      where: { id: taskId, tenantId },
       include: {
         steps: {
           orderBy: { stepIndex: 'asc' }
@@ -49,7 +51,7 @@ export class TaskService {
     })
 
     if (!task) {
-      throw new Error('Task not found')
+      throw new Error('Task not found for tenant')
     }
 
     for (const step of task.steps) {
@@ -67,6 +69,7 @@ export class TaskService {
 
       try {
         const result = await this.toolService.executeTool(
+          tenantId,
           taskId,
           step.id,
           step.actionName,
@@ -91,8 +94,8 @@ export class TaskService {
           }
         })
 
-        await prisma.agentTask.update({
-          where: { id: taskId },
+        await prisma.agentTask.updateMany({
+          where: { id: taskId, tenantId },
           data: { status: TaskStatus.FAILED }
         })
 
@@ -101,12 +104,12 @@ export class TaskService {
     }
 
     const cost = await prisma.toolExecution.aggregate({
-      where: { taskId },
+      where: { taskId, tenantId },
       _sum: { costUsd: true }
     })
 
-    await prisma.agentTask.update({
-      where: { id: taskId },
+    await prisma.agentTask.updateMany({
+      where: { id: taskId, tenantId },
       data: {
         status: TaskStatus.COMPLETED,
         completedAt: new Date(),

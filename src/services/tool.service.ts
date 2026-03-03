@@ -2,6 +2,7 @@ import { prisma } from '../prisma'
 
 export class ToolService {
   async executeTool(
+    tenantId: string,
     taskId: string,
     stepId: string,
     toolName: string,
@@ -25,6 +26,7 @@ export class ToolService {
 
       await prisma.toolExecution.create({
         data: {
+          tenantId,
           taskId,
           stepId,
           toolName,
@@ -39,6 +41,7 @@ export class ToolService {
     } catch (error) {
       await prisma.toolExecution.create({
         data: {
+          tenantId,
           taskId,
           stepId,
           toolName,
