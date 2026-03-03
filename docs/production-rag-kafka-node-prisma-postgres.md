@@ -1,6 +1,6 @@
 # Production Blueprint: RAG + Event-Driven Kafka (Node.js + Prisma + PostgreSQL/pgvector)
 
-เอกสารนี้เป็น **production runbook + architecture contract** สำหรับระบบ RAG แบบ event-driven ที่ใช้ Node.js, Prisma, PostgreSQL (pgvector), และ Apache Kafka โดยโฟกัสที่ topology, partition strategy, consumer config, exactly-once, และ multi-tenant isolation ระดับ production
+เอกสารนี้เป็น **production runbook + architecture contract** สำหรับระบบ RAG แบบ event-driven ที่ใช้ Node.js, Prisma, PostgreSQL (pgvector), และ Apache Kafka โดยโฟกัสที่ topology, partition strategy, consumer config, at-least-once delivery + dedup, และ multi-tenant isolation ระดับ production
 
 ---
 
@@ -240,7 +240,7 @@ LIMIT 10;
 
 ---
 
-## 8) Exactly-Once via Transactional Outbox
+## 8) Transactional Outbox (At-Least-Once Delivery)
 
 ```ts
 await prisma.$transaction(async (tx) => {
@@ -265,10 +265,17 @@ await prisma.$transaction(async (tx) => {
 
 Outbox publisher flow:
 1. select unpublished rows (`FOR UPDATE SKIP LOCKED`)
-2. produce to Kafka (idempotent)
-3. mark published=true
+2. produce to Kafka (idempotent producer)
+3. mark `published=true`
 
-ผลลัพธ์: แก้ปัญหา dual-write และรองรับ replay/restart ได้ปลอดภัย
+**Delivery guarantee:** flow นี้เป็น **at-least-once** (ไม่ใช่ exactly-once end-to-end) เพราะถ้า produce สำเร็จแต่ process ล่มก่อน persist `published=true` แถวเดิมจะถูกหยิบไป produce ซ้ำได้ตอน restart
+
+**สิ่งที่ต้องทำเพิ่มเพื่อกัน duplicate side-effect/indexing:**
+- ให้ consumer ทำ idempotency ด้วย business key เช่น `tenantId:memoryId`
+- เก็บ processed-event log/unique constraint ในปลายทางที่มี side effects
+- ถ้าต้องการ stronger semantics ให้ใช้ Kafka transactions ร่วมกับ transactional sink ที่รองรับจริง
+
+ผลลัพธ์: แก้ปัญหา dual-write และรองรับ replay/restart ได้ปลอดภัย โดยมี duplicate-safe contract ชัดเจน
 
 ---
 
@@ -368,4 +375,3 @@ kafka-consumer-groups \
 - shard ตาม tenant range
 - add reranker (cross-encoder) หลัง candidate retrieval
 - เพิ่ม Redis query-context cache สำหรับ hot prompts
-
