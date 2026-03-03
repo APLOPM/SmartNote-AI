@@ -77,6 +77,15 @@ brew install --cask google-cloud-sdk
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 ```
 
+
+## CI Prerequisites (Security & Dependency Review)
+
+To keep pull request checks stable and actionable:
+
+- Enable **Dependency graph** in repository settings: `Settings > Security > Security analysis`.
+- Keep `dependency-review` workflow enabled for PRs to detect risky dependency changes when support is available.
+- If Dependency graph is disabled, CI will skip dependency review with a notice and link to enablement instructions.
+
 ## System Intent
 
 This application implements a fully event-driven Retrieval-Augmented Generation (RAG) system designed for:
