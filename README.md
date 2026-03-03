@@ -253,12 +253,6 @@ Key references for implementers:
 This document defines architectural boundaries.
 All contributors must comply.
 
-## Agent Memory Layer ER Model
-
-Detailed data model and Mermaid diagram for task/workflow state, memory layers, tool executions, and conversation context are documented at:
-
-- `docs/agent-memory-layer-er.md`
-
 ## Production Autoscaling Configuration (Kafka Consumer Lag)
 
 Recommended autoscaling strategy for Kubernetes + Kafka-based RAG services:
@@ -299,27 +293,3 @@ Always ensure:
 - Keep manual offset commits and idempotent processing.
 - Add graceful shutdown hooks so consumers commit/disconnect on SIGTERM.
 - Monitor lag, partition skew, rebalance frequency, per-message processing latency, DB write latency, and vector insert latency.
-
-## CI/CD Production Template (GitHub Actions + Kubernetes)
-
-This repository now includes a production-ready CI/CD baseline for monorepo, multi-service, Dockerized Node.js + Prisma + PostgreSQL + Kafka systems:
-
-- `.github/workflows/ci.yml`
-  - Per-service lint/test/Prisma validation on pull requests.
-- `.github/workflows/build.yml`
-  - Immutable image build and push to GHCR using `:${GIT_SHA}` tags.
-- `.github/workflows/deploy.yml`
-  - Migration-first deployment flow, rollout checks, smoke test, and automatic rollback on failure.
-- `k8s/cicd/prisma-migrate-job.yaml`
-  - Kubernetes migration job template for `prisma migrate deploy`.
-- `k8s/cicd/embedding-deployment.yaml`
-  - Deployment template for embedding service.
-
-### CI/CD Lock Principles
-
-- Migration runs before rollout.
-- Images are immutable (`sha` tags only in deployment flow).
-- Services are independently deployable.
-- Rollback is a single command (`kubectl rollout undo`).
-- No manual DB edits.
-- No direct production DB access.
