@@ -3,9 +3,14 @@ name: Build & Push
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
+
+concurrency:
+  group: build-push-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker:
