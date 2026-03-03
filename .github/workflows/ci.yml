@@ -12,6 +12,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  CI_RETRY_MAX: 3
+
 jobs:
   workflow-health:
     name: ตรวจสอบความเสถียรของ GitHub Actions
@@ -86,6 +89,7 @@ jobs:
   build-test:
     name: สร้าง-ทดสอบ (${{ matrix.service_label }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -181,6 +185,7 @@ jobs:
       - name: Lint
         if: steps.detect.outputs.should_run == 'true'
         run: |
+          set -euo pipefail
           cd "${{ steps.detect.outputs.service_dir }}"
           npm run lint --if-present
 
@@ -194,11 +199,13 @@ jobs:
       - name: Build
         if: steps.detect.outputs.should_run == 'true'
         run: |
+          set -euo pipefail
           cd "${{ steps.detect.outputs.service_dir }}"
           npm run build --if-present
 
       - name: Prisma Validate
         if: steps.detect.outputs.should_run == 'true'
         run: |
+          set -euo pipefail
           cd "${{ steps.detect.outputs.service_dir }}"
           npx prisma validate --schema="${{ steps.detect.outputs.prisma_schema }}"

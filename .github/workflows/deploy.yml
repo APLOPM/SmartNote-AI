@@ -48,15 +48,51 @@ jobs:
               $svc=$IMAGE_PREFIX/$svc:$IMAGE_TAG
           done
 
+      - name: Apply autoscaling baseline
+        run: |
+          kubectl apply -f k8s/autoscaling/deployments-resources-and-rollout.yaml
+          kubectl apply -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
+          kubectl apply -f k8s/autoscaling/keda-kafka-autoscaling.yaml
+
       - name: Wait rollout
         run: |
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Rollout check failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 10))s"
+              sleep $((attempt * 10))
+              attempt=$((attempt + 1))
+            done
+          }
+
           for svc in api embedding retrieval llm outbox; do
-            kubectl rollout status deployment/$svc --timeout=300s
+            retry 3 kubectl rollout status deployment/$svc --timeout=300s
           done
 
       - name: Smoke test (API + DB + Kafka)
         run: |
-          kubectl run smoke-test \
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Smoke test failed after ${attempt} attempts"
+                return 1
+              fi
+              echo "::warning::Smoke test transient failure (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 10))s"
+              sleep $((attempt * 10))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          retry 2 kubectl run smoke-test \
             --image=$IMAGE_PREFIX/api:$IMAGE_TAG \
             --restart=Never \
             --rm -i \

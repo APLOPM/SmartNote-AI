@@ -51,6 +51,22 @@ To keep implementation aligned with product UX expectations, every feature propo
 - `docs/smartnote-serene-search-mockup.html` (search UX baseline)
 - `docs/editor-ui-mockup.html` (editor UX baseline)
 
+## AI Safety UX Requirements (Baseline)
+
+Release candidates MUST preserve minimum UX safety controls for AI-driven flows:
+
+- Always show explicit **Risk Notice / Human Confirmation / Audit Clarity** for sensitive actions.
+- Keep **Source Transparency** visible and avoid hidden destructive automation.
+- Ensure fallback and recovery states (`Retry`, clear error copy, and non-blocking exits) exist for every AI workflow.
+
+## Thai + English UX Baseline
+
+เพื่อรองรับผู้ใช้ภาษาไทยและอังกฤษ ทีมต้องรักษาความสอดคล้องของข้อความ UX หลัก (เช่น onboarding, empty states, confirmation dialogs, search hints) ให้เป็นสองภาษาในระดับ baseline เดียวกัน โดยอย่างน้อยต้อง:
+
+- รักษาความหมายของคำเตือนด้านความปลอดภัย AI ให้ตรงกันทั้งไทยและอังกฤษ
+- ใช้โทนภาษาที่เป็นมิตรและชัดเจนเหมือนกันในทั้งสองภาษา
+- อัปเดต mockup/spec เมื่อมีการเปลี่ยนแปลง copy หรือ interaction ที่ส่งผลต่อผู้ใช้
+
 ### Standardized Large-Screen UX Requirements
 
 Use proven responsive patterns so users get a consistent experience across **tablets, foldables, ChromeOS devices, and all phone sizes**:
