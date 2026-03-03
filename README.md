@@ -20,6 +20,7 @@ All implementations MUST follow this topology and data flow.
 
 - `README.md` — system architecture contract and operations baseline
 - `docs/` — deep technical specifications and design references
+- `docs/ai-ux-design-system-th.md` — UX design baseline for Chat, Editor, Dashboard, Search, and Agent transparency
 - `prisma/schema.prisma` — core data model baseline
 - `sql/` — SQL scripts (pgvector + operational rollouts)
 - `k8s/` — Kubernetes manifests for autoscaling and CI/CD deployment flow
