@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users     User[]
+  threads   Thread[]
+  memories  Memory[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model Thread {
+  id        String   @id @default(uuid())
+  tenantId  String
+  summary   String?
+  createdAt DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  memories Memory[]
+}
+
+model Memory {
+  id        String   @id @default(uuid())
+  tenantId  String
+  threadId  String
+  role      String
+  content   String
+  embedding Bytes?   // pgvector stored via raw SQL
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  thread Thread @relation(fields: [threadId], references: [id])
+
+  @@index([tenantId])
+  @@index([threadId])
+}
+
+model Outbox {
+  id        String   @id @default(uuid())
+  topic     String
+  key       String
+  payload   Json
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([published])
+}
+
+model QueryRequest {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  query     String
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model QueryResponse {
+  id        String   @id @default(uuid())
+  requestId String   @unique
+  response  String
+  createdAt DateTime @default(now())
+}
