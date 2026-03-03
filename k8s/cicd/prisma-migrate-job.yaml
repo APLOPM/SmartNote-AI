@@ -11,7 +11,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: ghcr.io/org/api:TAG
+          image: __API_IMAGE__
           command: ["npx", "prisma", "migrate", "deploy"]
           envFrom:
             - secretRef:

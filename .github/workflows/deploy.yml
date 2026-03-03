@@ -5,14 +5,35 @@ on:
     workflows: ["Build & Push"]
     types:
       - completed
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+
+    env:
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Normalize image prefix
+        run: |
+          echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.event.workflow_run.repository.full_name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
@@ -24,26 +45,49 @@ jobs:
 
       - name: Run migration job (before rollout)
         run: |
-          kubectl apply -f k8s/cicd/prisma-migrate-job.yaml
+          kubectl delete job prisma-migrate --ignore-not-found=true
+          API_IMAGE="$IMAGE_PREFIX/api:$DEPLOY_SHA"
+          sed "s|__API_IMAGE__|$API_IMAGE|g" k8s/cicd/prisma-migrate-job.yaml | kubectl apply -f -
           kubectl wait --for=condition=complete --timeout=300s job/prisma-migrate
 
       - name: Set image tags (immutable SHA only)
         run: |
           for svc in api embedding retrieval llm outbox; do
             kubectl set image deployment/$svc \
-              $svc=ghcr.io/${{ github.repository }}/$svc:${{ github.sha }}
+              $svc=$IMAGE_PREFIX/$svc:$DEPLOY_SHA
           done
+
+      - name: Apply autoscaling baseline
+        run: |
+          kubectl apply -f k8s/autoscaling/deployments-resources-and-rollout.yaml
+          kubectl apply -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
+          kubectl apply -f k8s/autoscaling/keda-kafka-autoscaling.yaml
 
       - name: Wait rollout
         run: |
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Rollout check failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 10))s"
+              sleep $((attempt * 10))
+              attempt=$((attempt + 1))
+            done
+          }
+
           for svc in api embedding retrieval llm outbox; do
-            kubectl rollout status deployment/$svc --timeout=300s
+            retry 3 kubectl rollout status deployment/$svc --timeout=300s
           done
 
       - name: Smoke test (API + DB + Kafka)
         run: |
           kubectl run smoke-test \
-            --image=ghcr.io/${{ github.repository }}/api:${{ github.sha }} \
+            --image=$IMAGE_PREFIX/api:$DEPLOY_SHA \
             --restart=Never \
             --rm -i \
             --command -- npm run smoke:test
