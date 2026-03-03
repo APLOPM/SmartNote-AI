@@ -1,35 +1,42 @@
-# รายงานตรวจสอบฐานโค้ด: งานแก้ไขที่เสนอ (อย่างละ 1 งาน)
+# รายงานตรวจสอบฐานโค้ด: ข้อเสนอแก้ไขอย่างละ 1 งาน
 
-เอกสารนี้สรุปงานแก้ไขที่ควรทำ 4 หมวดตามที่ร้องขอ: ข้อความพิมพ์ผิด, บั๊ก, คอมเมนต์/เอกสารคลาดเคลื่อน, และการปรับปรุงการทดสอบ
+เอกสารนี้สรุปปัญหาที่ตรวจพบจากโค้ดปัจจุบัน พร้อม “งานที่ควรทำ” อย่างละ 1 งานตามที่ร้องขอ: พิมพ์ผิด, บั๊ก, คอมเมนต์/เอกสารคลาดเคลื่อน, และการทดสอบ
 
 ## 1) งานแก้ไขข้อความที่พิมพ์ผิด (Typo)
-- **ปัญหา:** ชื่อแบรนด์ CDN เขียนเป็น `CloudFlare`
-- **ตำแหน่ง:** `docs/smartnote-ai-technical-spec-th.md` (ตารางหัวข้อ Infrastructure)
-- **งานที่เสนอ:** แก้เป็น `Cloudflare` ให้ตรงกับการสะกดปัจจุบันของแบรนด์
-- **ผลลัพธ์ที่คาดหวัง:** เอกสารมีความเป็นมืออาชีพและลดความคลุมเครือด้านการอ้างอิงเทคโนโลยี
+- **ปัญหา:** ชื่อผู้ให้บริการ CDN เขียนเป็น `CloudFlare`
+- **หลักฐาน:** ในตารางเทคโนโลยีของสเปกภาษาไทยระบุ `CloudFlare`
+- **ตำแหน่ง:** `docs/smartnote-ai-technical-spec-th.md`
+- **งานที่เสนอ:** เปลี่ยนเป็น `Cloudflare`
+- **เกณฑ์เสร็จงาน:** ไม่พบคำว่า `CloudFlare` ในเอกสารสเปก
 
 ## 2) งานแก้ไขบั๊ก (Bug Fix)
-- **ปัญหา:** `Planner.generatePlan()` คืนค่า step `create_document` ที่มีแค่ `{ format: 'docx' }` แต่ schema ของเครื่องมือ `create_document` กำหนดว่าต้องมี `title`, `content`, และ `format`
-- **ตำแหน่ง:**
-  - `src/llm/planner.ts`
-  - `src/llm/tool.registry.ts`
-- **ความเสี่ยง:** หากนำแผนจาก Planner ไปใช้กับเส้นทางที่ validate ตาม schema (เช่น agent ที่ใช้ function-calling) จะเกิด validation error ได้ทันที
-- **งานที่เสนอ:** ปรับ Planner ให้สร้าง payload ของ `create_document` ให้ครบตามสัญญา schema
-- **ผลลัพธ์ที่คาดหวัง:** แผนที่สร้างได้สอดคล้องกับ contract ของเครื่องมือ ลดโอกาส runtime failure
+- **ปัญหา:** `Planner.generatePlan()` สร้าง step `create_document` ด้วย input ไม่ครบ contract
+- **หลักฐาน:**
+  - `src/llm/planner.ts` ส่ง `{ format: 'docx' }`
+  - `src/llm/tool.registry.ts` กำหนด `create_document` ต้องมี `title`, `content`, `format`
+- **ผลกระทบ:** เมื่อเชื่อมกับเส้นทางที่ validate argument ตาม schema จะเกิด validation error runtime
+- **งานที่เสนอ:** ปรับ planner ให้สร้าง payload ที่ครบฟิลด์บังคับ (อย่างน้อย `title`, `content`, `format`)
+- **เกณฑ์เสร็จงาน:** step `create_document` ที่ planner คืนค่า parse ผ่าน schema ของ `toolArgumentSchemas.create_document`
 
 ## 3) งานแก้ไขคอมเมนต์/เอกสารคลาดเคลื่อน
-- **ปัญหา:** ใน Prisma schema ฟิลด์ `Memory.embedding` เป็น `Bytes?` พร้อมคอมเมนต์ว่าเป็น vector จริงจาก SQL migration ขณะที่ใน SQL migration บังคับชนิด `vector(1536)` โดยตรง
-- **ตำแหน่ง:**
-  - `prisma/schema.prisma`
-  - `sql/pgvector_setup.sql`
-- **งานที่เสนอ:** ทำให้คำอธิบายชัดเจนขึ้นว่าฝั่ง Prisma เป็น placeholder/type-level compromise และชนิดจริงใน DB คือ pgvector ผ่าน migration หรือปรับโมเดล Prisma ให้ตรงชนิดจริง (ตามแนวทางที่ทีมเลือก)
-- **ผลลัพธ์ที่คาดหวัง:** ลดความสับสนของผู้พัฒนาใหม่และลดความเสี่ยง migration ผิดพลาด
+- **ปัญหา:** Prisma model ระบุ `Memory.embedding` เป็น `Bytes?` พร้อมคอมเมนต์ว่า vector จริงมาจาก SQL migration ขณะที่ migration กำหนดเป็น `vector(1536)` โดยตรง
+- **หลักฐาน:**
+  - `prisma/schema.prisma` ใช้ `embedding Bytes?`
+  - `sql/pgvector_setup.sql` บังคับชนิดคอลัมน์เป็น `vector(1536)`
+- **งานที่เสนอ:** เพิ่มคำอธิบายใน schema/doc ให้ชัดเจนว่าทำไม Prisma กับ DB type จึงต่างกัน และแนวทางใช้งานที่ถูกต้อง
+- **เกณฑ์เสร็จงาน:** มีข้อความอธิบายที่ชัดเจนในจุดเดียวที่ทีมใช้เป็นแหล่งอ้างอิงหลัก (single source of truth)
 
 ## 4) งานปรับปรุงการทดสอบ
-- **ช่องว่างที่พบ:** ยังไม่มี test ที่ยืนยันว่า output ของ Planner สอดคล้องกับ `toolArgumentSchemas`
-- **งานที่เสนอ:** เพิ่ม contract test 1 ชุดสำหรับ Planner โดยตรวจว่าแต่ละ step ที่สร้างขึ้น parse ผ่าน schema ของ tool ได้จริง
-- **เกณฑ์ผ่าน:**
-  1. `summarize_note` ผ่าน `summarize_note` schema
-  2. `create_document` ผ่าน `create_document` schema
-  3. หากมีการเพิ่มเครื่องมือใหม่ในอนาคต ต้องเพิ่มกรณีทดสอบตาม schema ใหม่
-- **ผลลัพธ์ที่คาดหวัง:** ป้องกัน regression เชิงสัญญาระหว่าง planner และ tool registry
+- **ช่องว่าง:** ยังไม่มี automated test ที่ตรวจความสอดคล้องระหว่าง output ของ planner กับ tool schemas
+- **งานที่เสนอ:** เพิ่ม contract test ของ planner 1 ชุด
+- **ขอบเขตทดสอบขั้นต่ำ:**
+  1. ทุก step ที่ planner สร้างต้องเป็น tool ที่รองรับจริง
+  2. input ของแต่ละ step ต้อง parse ผ่าน schema ของ tool นั้น
+  3. เคส `create_document` ต้องมี `title`, `content`, `format`
+- **เกณฑ์เสร็จงาน:** test fail เมื่อ planner คืน payload ไม่ตรง schema และ pass เมื่อแก้ครบ
+
+## หมายเหตุการจัดลำดับความสำคัญ
+1. **บั๊ก planner/schema mismatch** (กระทบ runtime โดยตรง)
+2. **เพิ่ม contract test** (ป้องกัน regression)
+3. **เอกสาร/คอมเมนต์คลาดเคลื่อน** (ลดความสับสนระยะยาว)
+4. **typo** (ความถูกต้องเชิงเอกสาร)
