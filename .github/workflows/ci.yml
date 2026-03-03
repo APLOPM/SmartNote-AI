@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate workflow syntax with actionlint
-        uses: rhysd/actionlint@v1
+        uses: rhysd/actionlint@v1.7.7
 
       - name: Validate critical workflow files exist
         run: |
@@ -98,6 +98,7 @@ jobs:
       matrix:
         include:
           - service: api
+            service_label: API
             path: .
 
     defaults:
