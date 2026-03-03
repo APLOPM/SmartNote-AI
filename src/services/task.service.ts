@@ -12,6 +12,21 @@ const MAX_STEPS = 100
 export class TaskService {
   private toolService = new ToolService()
 
+  private async updateStepForTenant(
+    tenantId: string,
+    stepId: string,
+    data: Parameters<typeof prisma.taskStep.updateMany>[0]['data']
+  ) {
+    const result = await prisma.taskStep.updateMany({
+      where: { id: stepId, tenantId },
+      data
+    })
+
+    if (result.count === 0) {
+      throw new Error('Task step not found for tenant')
+    }
+  }
+
   async createTask(tenantId: string, sessionId: string, goal: string) {
     return prisma.agentTask.create({
       data: {
@@ -59,12 +74,9 @@ export class TaskService {
         continue
       }
 
-      await prisma.taskStep.update({
-        where: { id: step.id },
-        data: {
-          status: StepStatus.RUNNING,
-          startedAt: new Date()
-        }
+      await this.updateStepForTenant(tenantId, step.id, {
+        status: StepStatus.RUNNING,
+        startedAt: new Date()
       })
 
       try {
@@ -76,22 +88,16 @@ export class TaskService {
           step.inputPayload as Record<string, unknown>
         )
 
-        await prisma.taskStep.update({
-          where: { id: step.id },
-          data: {
-            status: StepStatus.SUCCESS,
-            outputPayload: result,
-            finishedAt: new Date()
-          }
+        await this.updateStepForTenant(tenantId, step.id, {
+          status: StepStatus.SUCCESS,
+          outputPayload: result,
+          finishedAt: new Date()
         })
       } catch (error) {
-        await prisma.taskStep.update({
-          where: { id: step.id },
-          data: {
-            status: StepStatus.FAILED,
-            finishedAt: new Date(),
-            errorMessage: error instanceof Error ? error.message : 'Unknown step error'
-          }
+        await this.updateStepForTenant(tenantId, step.id, {
+          status: StepStatus.FAILED,
+          finishedAt: new Date(),
+          errorMessage: error instanceof Error ? error.message : 'Unknown step error'
         })
 
         await prisma.agentTask.updateMany({
