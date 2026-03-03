@@ -151,6 +151,17 @@ CI is configured to remain resilient when transient failures occur:
 
 This repository treats CI stability and UX safety controls as release-blocking quality standards.
 
+### CI/CD Auto-Scaling Fallback for Unstable Checks
+
+To reduce bottlenecks when some checks fail from transient capacity or infra issues, CI/CD should support adaptive scaling policies in runner infrastructure:
+
+- Keep baseline jobs on standard GitHub-hosted runners and route burst traffic to self-hosted autoscaling pools when queue time spikes.
+- Use horizontal pod autoscaling (or runner scale sets) for build/test workers based on queue depth and average startup latency.
+- Retry only idempotent validation steps (install/lint/test) and avoid retrying deploy steps without explicit approval.
+- Record flaky-check metrics (pass-after-retry, timeout ratio, dependency registry failure rate) and tune `CI_RETRY_MAX` / `CI_RETRY_BACKOFF_SECONDS` from observed trends.
+
+These practices help keep CI predictable while preserving UX and safety gates as mandatory release criteria.
+
 ## CI Prerequisites (Security & Dependency Review)
 
 To keep pull request checks stable and actionable:
