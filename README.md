@@ -161,28 +161,16 @@ For jobs that commonly fail due to temporary runner saturation or package regist
 
 This repository treats CI stability and UX safety controls as release-blocking quality standards.
 
+### CI/CD Auto-Scaling Fallback for Unstable Checks
 
-### CI/CD Auto-Scaling for Unstable Checks
+To reduce bottlenecks when some checks fail from transient capacity or infra issues, CI/CD should support adaptive scaling policies in runner infrastructure:
 
-To reduce re-run fatigue when transient issues occur in CI/CD:
+- Keep baseline jobs on standard GitHub-hosted runners and route burst traffic to self-hosted autoscaling pools when queue time spikes.
+- Use horizontal pod autoscaling (or runner scale sets) for build/test workers based on queue depth and average startup latency.
+- Retry only idempotent validation steps (install/lint/test) and avoid retrying deploy steps without explicit approval.
+- Record flaky-check metrics (pass-after-retry, timeout ratio, dependency registry failure rate) and tune `CI_RETRY_MAX` / `CI_RETRY_BACKOFF_SECONDS` from observed trends.
 
-- Use matrix parallelism with controlled concurrency (`max-parallel`) so one flaky path does not block all checks.
-- Keep `fail-fast: false` for multi-job validation so dependency, workflow, and UX gates still provide full diagnostic signals.
-- Apply retry + exponential backoff for network-sensitive commands (`npm ci`, lint/test/build, Prisma validation).
-- Prefer lockfile-aware caching to reduce install variance and make re-runs deterministic.
-- Keep retry policy centralized through environment variables (`CI_RETRY_MAX`, `CI_RETRY_BACKOFF_SECONDS`) for quick tuning.
-
-This baseline gives practical auto-scaling behavior for CI verification load while preserving strict UX and dependency guardrails.
-
-### Thai/English UX Safety Copy Standard (Required)
-
-All critical UX safety messages must remain bilingual and semantically equivalent:
-
-- **TH:** concise, respectful, confidence-building tone with explicit consent cues.
-- **EN:** clear, direct, and matching risk/confirmation meaning from Thai copy.
-- Sensitive actions must include visible confirmation, safety rationale, and recovery path (`Cancel` / `Retry`).
-- PRs that change onboarding, assistant replies, warnings, or confirmation dialogs must update both TH and EN copy in UX docs/mockups.
-
+These practices help keep CI predictable while preserving UX and safety gates as mandatory release criteria.
 
 ## CI Prerequisites (Security & Dependency Review)
 
