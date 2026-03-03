@@ -1,0 +1,71 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Build & Push"]
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Normalize image prefix
+        run: |
+          echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.event.workflow_run.repository.full_name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Run migration job (before rollout)
+        run: |
+          kubectl apply -f k8s/cicd/prisma-migrate-job.yaml
+          kubectl wait --for=condition=complete --timeout=300s job/prisma-migrate
+
+      - name: Set image tags (immutable SHA only)
+        run: |
+          for svc in api embedding retrieval llm outbox; do
+            kubectl set image deployment/$svc \
+              $svc=$IMAGE_PREFIX/$svc:$IMAGE_TAG
+          done
+
+      - name: Wait rollout
+        run: |
+          for svc in api embedding retrieval llm outbox; do
+            kubectl rollout status deployment/$svc --timeout=300s
+          done
+
+      - name: Smoke test (API + DB + Kafka)
+        run: |
+          kubectl run smoke-test \
+            --image=$IMAGE_PREFIX/api:$IMAGE_TAG \
+            --restart=Never \
+            --rm -i \
+            --command -- npm run smoke:test
+
+      - name: Rollback on failure
+        if: ${{ failure() }}
+        run: |
+          for svc in api embedding retrieval llm outbox; do
+            kubectl rollout undo deployment/$svc || true
+          done
+          exit 1

@@ -1,0 +1,68 @@
+name: Build & Push
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+concurrency:
+  group: build-push-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api, embedding, retrieval, llm, outbox]
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Normalize image prefix
+        run: |
+          echo "IMAGE_PREFIX=${REGISTRY}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Detect Dockerfile
+        id: detect
+        run: |
+          context_dir="services/${{ matrix.service }}"
+          dockerfile_path="$context_dir/Dockerfile"
+
+          if [ -f "$dockerfile_path" ]; then
+            echo "buildable=true" >> "$GITHUB_OUTPUT"
+            echo "context_dir=$context_dir" >> "$GITHUB_OUTPUT"
+          else
+            echo "buildable=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skip docker build for ${{ matrix.service }}: $dockerfile_path not found."
+          fi
+
+      - name: Login Registry
+        if: steps.detect.outputs.buildable == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Image (immutable SHA tag)
+        if: steps.detect.outputs.buildable == 'true'
+        run: |
+          docker build \
+            -t $IMAGE_PREFIX/${{ matrix.service }}:${{ github.sha }} \
+            "${{ steps.detect.outputs.context_dir }}"
+
+      - name: Push Image
+        if: steps.detect.outputs.buildable == 'true'
+        run: |
+          docker push \
+            $IMAGE_PREFIX/${{ matrix.service }}:${{ github.sha }}

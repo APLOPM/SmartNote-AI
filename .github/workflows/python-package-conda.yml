@@ -1,0 +1,52 @@
+name: Python Package using Conda
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Conda project files
+        id: detect
+        run: |
+          if [ -f environment.yml ]; then
+            echo "has_environment=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_environment=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skip conda build: environment.yml not found."
+          fi
+
+      - name: Set up Miniconda
+        if: steps.detect.outputs.has_environment == 'true'
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: '3.10'
+          activate-environment: smartnote-ci
+          environment-file: environment.yml
+
+      - name: Lint with flake8
+        if: steps.detect.outputs.has_environment == 'true'
+        shell: bash -el {0}
+        run: |
+          conda install -y flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        if: steps.detect.outputs.has_environment == 'true'
+        shell: bash -el {0}
+        run: |
+          conda install -y pytest
+          pytest
