@@ -169,8 +169,26 @@ Always ensure:
 - Add graceful shutdown hooks so consumers commit/disconnect on SIGTERM.
 - Monitor lag, partition skew, rebalance frequency, per-message processing latency, DB write latency, and vector insert latency.
 
-## Detailed Production Blueprint
+## CI/CD Production Template (GitHub Actions + Kubernetes)
 
-For full production topology, partitioning strategy, and consumer configuration, see:
+This repository now includes a production-ready CI/CD baseline for monorepo, multi-service, Dockerized Node.js + Prisma + PostgreSQL + Kafka systems:
 
-- `docs/production-rag-kafka-node-prisma-postgres.md`
+- `.github/workflows/ci.yml`
+  - Per-service lint/test/Prisma validation on pull requests.
+- `.github/workflows/build.yml`
+  - Immutable image build and push to GHCR using `:${GIT_SHA}` tags.
+- `.github/workflows/deploy.yml`
+  - Migration-first deployment flow, rollout checks, smoke test, and automatic rollback on failure.
+- `k8s/cicd/prisma-migrate-job.yaml`
+  - Kubernetes migration job template for `prisma migrate deploy`.
+- `k8s/cicd/embedding-deployment.yaml`
+  - Deployment template for embedding service.
+
+### CI/CD Lock Principles
+
+- Migration runs before rollout.
+- Images are immutable (`sha` tags only in deployment flow).
+- Services are independently deployable.
+- Rollback is a single command (`kubectl rollout undo`).
+- No manual DB edits.
+- No direct production DB access.
