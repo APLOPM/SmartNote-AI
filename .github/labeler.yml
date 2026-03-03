@@ -1,0 +1,41 @@
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/**'
+          - 'public/**'
+          - '**/*.{js,jsx,ts,tsx,css,scss,html}'
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'server/**'
+          - 'api/**'
+          - '**/*.{py,go,rb,php,java}'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**'
+
+github-actions:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/**'
+          - '.github/labeler.yml'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'package.json'
+          - 'package-lock.json'
+          - 'yarn.lock'
+          - 'pnpm-lock.yaml'
+          - 'requirements*.txt'
+          - 'poetry.lock'
+          - 'pyproject.toml'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartNote Serene Semantic Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              bg: '#F6F8FC',
+              surface: '#FFFFFF',
+              brand: '#2563EB',
+              ai: '#7C3AED',
+              textp: '#0F172A',
+              texts: '#475569',
+              borderc: '#CBD5E1',
+              safe: '#16A34A',
+            },
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-bg text-textp antialiased">
+    <div class="mx-auto min-h-screen max-w-6xl p-6 lg:p-10">
+      <header class="mb-6 rounded-2xl border border-borderc bg-surface p-5">
+        <h1 class="text-2xl font-bold">Semantic Search</h1>
+        <p class="mt-1 text-sm text-texts">ค้นหาแบบเข้าใจบริบท พร้อมเหตุผลและความปลอดภัย</p>
+        <div class="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+          <input class="rounded-xl border border-borderc px-4 py-3" value="สรุปแผน Q3 ที่เกี่ยวข้องกับ retention" />
+          <button class="rounded-xl border border-borderc px-4 py-3 text-sm">Keyword</button>
+          <button class="rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white">Hybrid (Default)</button>
+          <button class="rounded-xl border border-borderc px-4 py-3 text-sm">Semantic</button>
+        </div>
+      </header>
+
+      <main class="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section class="space-y-4">
+          <article class="rounded-2xl border border-ai/30 bg-surface p-5">
+            <div class="mb-2 flex items-center gap-2 text-ai">
+              <span class="text-xs font-bold">SMART ANSWER</span>
+              <span class="rounded-full bg-safe/10 px-2 py-1 text-xs font-semibold text-safe">Grounded</span>
+            </div>
+            <p class="leading-7">คุณกล่าวถึงแผน Q3 เรื่อง retention ในโน้ต “Tuesday Growth Sync” และ “Q3 Budget Alignment” โดยเสนอให้เพิ่ม onboarding trigger และวัด activation ภายใน 7 วัน</p>
+            <div class="mt-3 flex flex-wrap gap-2 text-xs">
+              <span class="rounded-full bg-bg px-2 py-1">semantic: 2 hits</span>
+              <span class="rounded-full bg-bg px-2 py-1">keyword: 1 hit</span>
+              <span class="rounded-full bg-bg px-2 py-1">confidence: high</span>
+            </div>
+          </article>
+
+          <article class="rounded-2xl border border-borderc bg-surface p-5">
+            <div class="mb-2 flex items-start justify-between">
+              <h2 class="font-semibold">Tuesday Growth Sync</h2>
+              <span class="text-xs text-texts">updated 2 days ago</span>
+            </div>
+            <p class="text-sm text-texts">“…ทีมเห็นตรงกันว่า <mark class="rounded bg-brand/10 px-1">retention Q3</mark> ต้องผูกกับ activation metric และการทดลอง onboarding แบบใหม่…”</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span class="rounded-full bg-ai/10 px-2 py-1 text-ai">Semantic match 0.92</span>
+              <span class="rounded-full bg-bg px-2 py-1">tag: growth</span>
+              <button class="rounded-full border border-borderc px-2 py-1">Open context</button>
+            </div>
+          </article>
+
+          <article class="rounded-2xl border border-borderc bg-surface p-5">
+            <div class="mb-2 flex items-start justify-between">
+              <h2 class="font-semibold">Q3 Budget Alignment</h2>
+              <span class="text-xs text-texts">updated 5 days ago</span>
+            </div>
+            <p class="text-sm text-texts">“…ปรับงบจาก paid ads ไปที่ lifecycle program เพื่อหนุน <mark class="rounded bg-brand/10 px-1">long-term retention</mark>…”</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span class="rounded-full bg-ai/10 px-2 py-1 text-ai">Hybrid match 0.87</span>
+              <span class="rounded-full bg-bg px-2 py-1">tag: finance</span>
+              <button class="rounded-full border border-borderc px-2 py-1">Open context</button>
+            </div>
+          </article>
+        </section>
+
+        <aside class="space-y-4">
+          <div class="rounded-2xl border border-borderc bg-surface p-4">
+            <h3 class="text-sm font-semibold">Why these results</h3>
+            <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-texts">
+              <li>Intent ใกล้เคียงกับ “Q3 retention strategy”</li>
+              <li>มี entity overlap: Q3, activation, onboarding</li>
+              <li>freshness + relevance score ผ่าน threshold</li>
+            </ul>
+          </div>
+
+          <div class="rounded-2xl border border-borderc bg-surface p-4">
+            <h3 class="text-sm font-semibold">Safety Filters</h3>
+            <div class="mt-3 space-y-2 text-sm text-texts">
+              <label class="flex items-center justify-between"><span>Exclude sensitive notes</span><input type="checkbox" checked /></label>
+              <label class="flex items-center justify-between"><span>Team scope only</span><input type="checkbox" checked /></label>
+              <label class="flex items-center justify-between"><span>Show citation required only</span><input type="checkbox" checked /></label>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </body>
+</html>
