@@ -88,7 +88,7 @@ jobs:
           rg -q "pull_request:" .github/workflows/dependency-review.yml
 
   build-test:
-    name: สร้าง-ทดสอบ (${{ matrix.service_label }})
+    name: สร้าง-ทดสอบ (${{ matrix.service }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -148,19 +148,40 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: ${{ matrix.path }}/package-lock.json
+          cache-dependency-path: ${{ steps.detect.outputs.lockfile }}
 
-      - name: Install (retry for flaky registry/network)
+      - name: Install dependencies (with retry and lockfile fallback)
         if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd ${{ matrix.path }}
-          npm ci
+          set -euo pipefail
+          cd "${{ steps.detect.outputs.service_dir }}"
 
-      - name: Lint
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
+              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          if [ "${{ steps.detect.outputs.has_lockfile }}" = "true" ]; then
+            retry "$CI_RETRY_MAX" npm ci
+          else
+            retry "$CI_RETRY_MAX" npm install --no-audit --no-fund
+          fi
+
+      - name: Lint (retry)
         if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd ${{ matrix.path }}
-          npm run lint
+          set -euo pipefail
+          cd "${{ steps.detect.outputs.service_dir }}"
 
           retry() {
             local max_attempts="$1"
@@ -179,14 +200,48 @@ jobs:
 
           retry "$CI_RETRY_MAX" npm run lint --if-present
 
-      - name: Test (retry once for flaky integration checks)
+      - name: Test (retry)
         if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd ${{ matrix.path }}
-          npm run test
+          set -euo pipefail
+          cd "${{ steps.detect.outputs.service_dir }}"
 
-      - name: Prisma Validate
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
+              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          retry "$CI_RETRY_MAX" npm run test --if-present
+
+      - name: Prisma Validate (retry)
         if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd ${{ matrix.path }}
-          npx prisma validate --schema=prisma/schema.prisma
+          set -euo pipefail
+          cd "${{ matrix.path }}"
+
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
+              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          retry "$CI_RETRY_MAX" npx prisma validate --schema=prisma/schema.prisma
