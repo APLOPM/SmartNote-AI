@@ -6,12 +6,23 @@ on:
 
 jobs:
   build-test:
+    name: สร้าง-ทดสอบ (${{ matrix.service_label }})
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        service: [api, embedding, retrieval, llm, outbox]
+        include:
+          - service: api
+            service_label: api
+          - service: embedding
+            service_label: ฝังตัว
+          - service: retrieval
+            service_label: การดึงข้อมูล
+          - service: llm
+            service_label: llm
+          - service: outbox
+            service_label: กล่องขาออก
 
     defaults:
       run:
@@ -41,6 +52,11 @@ jobs:
         run: |
           cd services/${{ matrix.service }}
           npm run test
+
+      - name: Build
+        run: |
+          cd services/${{ matrix.service }}
+          npm run build
 
       - name: Prisma Validate
         run: |
