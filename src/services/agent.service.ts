@@ -14,7 +14,7 @@ export class AgentService {
       const plan = await this.planner.generatePlan(goal)
 
       await this.taskService.initializeSteps(tenantId, task.id, plan.steps)
-      await this.taskService.executeTask(tenantId, task.id)
+      await this.taskService.executeTask(tenantId, task.id, `run:${task.id}`)
 
       return { taskId: task.id }
     } catch (error) {
@@ -30,7 +30,17 @@ export class AgentService {
     }
   }
 
-  async resumeTask(tenantId: string, taskId: string) {
-    return this.taskService.executeTask(tenantId, taskId)
+  async resumeTask(tenantId: string, taskId: string, resumeKey?: string) {
+    const snapshot = await this.taskService.recoverSnapshot(tenantId, taskId)
+    const execution = await this.taskService.executeTask(
+      tenantId,
+      taskId,
+      resumeKey ?? `resume:${taskId}`
+    )
+
+    return {
+      ...execution,
+      snapshot
+    }
   }
 }

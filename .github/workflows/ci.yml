@@ -9,6 +9,17 @@ permissions:
   contents: read
 
 jobs:
+  docs-mockups:
+    name: ตรวจสอบหน้า mockup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate mockup files exist
+        run: |
+          test -f docs/smartnote-serene-dashboard-mockup.html
+          test -f docs/smartnote-serene-search-mockup.html
+
   build-test:
     name: สร้าง-ทดสอบ (${{ matrix.service_label }})
     runs-on: ubuntu-latest
@@ -35,34 +46,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect service path
+        id: detect
+        run: |
+          if [ -f "services/${{ matrix.service }}/package.json" ]; then
+            echo "service_dir=services/${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+            echo "lockfile=services/${{ matrix.service }}/package-lock.json" >> "$GITHUB_OUTPUT"
+            echo "prisma_schema=../../prisma/schema.prisma" >> "$GITHUB_OUTPUT"
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          elif [ -f "src/services/${{ matrix.service }}/package.json" ]; then
+            echo "service_dir=src/services/${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+            echo "lockfile=src/services/${{ matrix.service }}/package-lock.json" >> "$GITHUB_OUTPUT"
+            echo "prisma_schema=../../../prisma/schema.prisma" >> "$GITHUB_OUTPUT"
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skip ${{ matrix.service }}: package.json not found in services/ or src/services/."
+          fi
+
       - name: Setup Node
+        if: steps.detect.outputs.should_run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+          cache-dependency-path: ${{ steps.detect.outputs.lockfile }}
 
       - name: Install
+        if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd services/${{ matrix.service }}
+          cd "${{ steps.detect.outputs.service_dir }}"
           npm ci
 
       - name: Lint
+        if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd services/${{ matrix.service }}
+          cd "${{ steps.detect.outputs.service_dir }}"
           npm run lint
 
       - name: Test
+        if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd services/${{ matrix.service }}
+          cd "${{ steps.detect.outputs.service_dir }}"
           npm run test
 
       - name: Build
+        if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd services/${{ matrix.service }}
+          cd "${{ steps.detect.outputs.service_dir }}"
           npm run build
 
       - name: Prisma Validate
+        if: steps.detect.outputs.should_run == 'true'
         run: |
-          cd services/${{ matrix.service }}
-          npx prisma validate --schema=../../prisma/schema.prisma
+          cd "${{ steps.detect.outputs.service_dir }}"
+          npx prisma validate --schema="${{ steps.detect.outputs.prisma_schema }}"

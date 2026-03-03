@@ -20,6 +20,7 @@ All implementations MUST follow this topology and data flow.
 
 - `README.md` — system architecture contract and operations baseline
 - `docs/` — deep technical specifications and design references
+- `docs/ai-ux-design-system-th.md` — UX design baseline for Chat, Editor, Dashboard, Search, and Agent transparency
 - `prisma/schema.prisma` — core data model baseline
 - `sql/` — SQL scripts (pgvector + operational rollouts)
 - `k8s/` — Kubernetes manifests for autoscaling and CI/CD deployment flow
@@ -203,6 +204,7 @@ Key references for implementers:
 - `docs/background-queue-worker-and-kafka-rag.md`
 - `docs/agent-memory-layer-er.md`
 - `docs/smartnote-ai-technical-spec-th.md`
+- `docs/smartnote-ai-product-overview-th.md`
 - `docs/codebase-audit-fix-proposals-th.md`
 - `docs/self-hosted-runner-guide-th.md`
 
