@@ -36,9 +36,7 @@ ON "Memory"
 USING ivfflat (embedding vector_cosine_ops)
 WITH (lists = 200);
 
--- Improve tenant filtering
-CREATE INDEX IF NOT EXISTS memory_tenant_embedding_idx
-ON "Memory" ("tenantId");
+-- Tenant filter index is already managed by Prisma schema (@@index([tenantId])).
 
 -- Refresh planner stats after index/column changes
 ANALYZE "Memory";
