@@ -51,6 +51,20 @@ To keep implementation aligned with product UX expectations, every feature propo
 - `docs/smartnote-serene-search-mockup.html` (search UX baseline)
 - `docs/editor-ui-mockup.html` (editor UX baseline)
 
+### Standardized Large-Screen UX Requirements
+
+Use proven responsive patterns so users get a consistent experience across **tablets, foldables, ChromeOS devices, and all phone sizes**:
+
+- Prefer adaptive layouts with clear breakpoints and stable information hierarchy for expanded screens.
+- Use standard navigation components (`NavigationRail`, `NavigationDrawer`, or equivalent web patterns) to keep navigation discoverable but uncluttered.
+- Keep primary content focused while secondary actions move into drawers/panels to reduce UI noise.
+- Ensure keyboard and pointer workflows remain first-class on large-screen and ChromeOS form factors.
+- Validate accessibility basics (focus order, contrast, touch target size, and responsive text scaling) for each layout mode.
+
+### UX Review Gate in CI
+
+CI now validates that the baseline UX documents above remain present and that this README continues to declare the UX baseline section. This acts as a minimum guardrail when workflows or architecture contracts are updated.
+
 When updating architecture, workflows, or service contracts, add a UX impact note in the related PR description and verify these docs remain current.
 
 ## Google Cloud SDK Installation (for Stitch Authentication)
