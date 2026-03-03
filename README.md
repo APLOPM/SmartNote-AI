@@ -53,6 +53,25 @@ To keep implementation aligned with product UX expectations, every feature propo
 
 When updating architecture, workflows, or service contracts, add a UX impact note in the related PR description and verify these docs remain current.
 
+## AI Safety UX Requirements (Baseline)
+
+To reduce AI safety complexity and support responsible AI operations from day one, all releases MUST keep the following product UX capabilities visible and testable:
+
+- **Proactive risk reduction** via integrated monitoring, testing, and tracking (including adversarial testing where applicable).
+- **Real-time reporting** for generative model performance, behavior, and safety status, enabling cross-functional risk management.
+- **Policy customization** through model-level policy tuning, policy blocking, and configurable guardrails for organization-specific compliance.
+- **Technical control center** (single operational surface) for AI safety governance, compliance posture, model input/output evaluation, and continuous performance insights.
+- **Safe launch readiness** with explicit checks that model behavior aligns with company policy before production rollout.
+
+Minimum UX documentation that must stay up to date:
+
+- `docs/ai-ux-design-system-th.md`
+- `docs/smartnote-serene-dashboard-mockup.html`
+- `docs/smartnote-serene-search-mockup.html`
+- `docs/editor-ui-mockup.html`
+
+CI guardrails in `.github/workflows/ci.yml` enforce that this UX baseline remains documented in `README.md`.
+
 ## Google Cloud SDK Installation (for Stitch Authentication)
 
 If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
