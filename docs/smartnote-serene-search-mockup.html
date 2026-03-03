@@ -1,146 +1,104 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="th">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartNote Serene - Semantic Search</title>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Satoshi:wght@400;500;700&display=swap"
-    />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <title>SmartNote Serene Semantic Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class',
         theme: {
           extend: {
             colors: {
-              primary: '#2B6EB0',
-              'primary-light': '#60A5FA',
-              'background-light': '#F9FAFB',
-              'background-dark': '#101922',
+              bg: '#F6F8FC',
               surface: '#FFFFFF',
-              'text-main': '#1F2937',
-              'text-muted': '#6B7280',
-              'accent-success': '#10B981',
-            },
-            fontFamily: {
-              display: ['Satoshi', 'Inter', 'sans-serif'],
-              body: ['Satoshi', 'Inter', 'sans-serif'],
-            },
-            borderRadius: {
-              DEFAULT: '0.5rem',
-              lg: '0.75rem',
-              xl: '1.5rem',
-              '2xl': '1.5rem',
-              full: '9999px',
-            },
-            boxShadow: {
-              soft: '0 8px 24px -4px rgba(43, 110, 176, 0.06)',
-              float: '0 12px 32px -4px rgba(43, 110, 176, 0.12)',
+              brand: '#2563EB',
+              ai: '#7C3AED',
+              textp: '#0F172A',
+              texts: '#475569',
+              borderc: '#CBD5E1',
+              safe: '#16A34A',
             },
           },
         },
-      };
+      }
     </script>
-    <style>
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: #e5e7eb;
-        border-radius: 20px;
-      }
-      .ai-gradient-bg {
-        background: linear-gradient(135deg, #2b6eb0 0%, #60a5fa 100%);
-      }
-      body {
-        min-height: max(884px, 100dvh);
-      }
-    </style>
   </head>
-  <body class="bg-background-light font-display text-text-main antialiased min-h-screen flex flex-col overflow-hidden">
-    <header class="pt-8 pb-2 px-5 sticky top-0 z-10 bg-background-light/95 backdrop-blur-sm">
-      <div class="max-w-md mx-auto w-full">
-        <h1 class="text-2xl font-bold text-text-main mb-6 tracking-tight">Search</h1>
-        <div class="relative group">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <span class="material-symbols-outlined text-primary" style="font-size: 24px">search</span>
-          </div>
-          <input
-            class="block w-full pl-12 pr-12 py-3.5 bg-surface border-none rounded-lg text-text-main placeholder-text-muted focus:ring-2 focus:ring-primary/20 shadow-soft transition-all duration-300 ease-out"
-            placeholder="Ask me anything..."
-            type="text"
-            value="Where did I mention the Q3 strategy?"
-          />
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <button class="p-2 rounded-full hover:bg-background-light text-text-muted hover:text-primary transition-colors">
-              <span class="material-symbols-outlined" style="font-size: 24px">mic</span>
-            </button>
-          </div>
+  <body class="bg-bg text-textp antialiased">
+    <div class="mx-auto min-h-screen max-w-6xl p-6 lg:p-10">
+      <header class="mb-6 rounded-2xl border border-borderc bg-surface p-5">
+        <h1 class="text-2xl font-bold">Semantic Search</h1>
+        <p class="mt-1 text-sm text-texts">ค้นหาแบบเข้าใจบริบท พร้อมเหตุผลและความปลอดภัย</p>
+        <div class="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+          <input class="rounded-xl border border-borderc px-4 py-3" value="สรุปแผน Q3 ที่เกี่ยวข้องกับ retention" />
+          <button class="rounded-xl border border-borderc px-4 py-3 text-sm">Keyword</button>
+          <button class="rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white">Hybrid (Default)</button>
+          <button class="rounded-xl border border-borderc px-4 py-3 text-sm">Semantic</button>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <main class="flex-1 overflow-y-auto px-5 pb-24 w-full max-w-md mx-auto">
-      <div class="mt-6 mb-8">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="material-symbols-outlined text-primary" style="font-size: 20px">smart_toy</span>
-          <h2 class="text-sm font-bold uppercase tracking-wider text-text-muted">Smart Answer</h2>
-        </div>
-        <div class="bg-surface p-5 rounded-lg shadow-soft border border-primary/10 relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-          <p class="text-text-main leading-relaxed relative z-10">
-            You mentioned the <span class="bg-primary/10 text-primary font-medium px-1 rounded">Q3 strategy</span>
-            in your meeting notes from Tuesday. You planned to focus specifically on
-            <span class="bg-primary/10 text-primary font-medium px-1 rounded">social media growth</span>
-            and influencer partnerships.
-          </p>
-        </div>
-      </div>
+      <main class="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section class="space-y-4">
+          <article class="rounded-2xl border border-ai/30 bg-surface p-5">
+            <div class="mb-2 flex items-center gap-2 text-ai">
+              <span class="text-xs font-bold">SMART ANSWER</span>
+              <span class="rounded-full bg-safe/10 px-2 py-1 text-xs font-semibold text-safe">Grounded</span>
+            </div>
+            <p class="leading-7">คุณกล่าวถึงแผน Q3 เรื่อง retention ในโน้ต “Tuesday Growth Sync” และ “Q3 Budget Alignment” โดยเสนอให้เพิ่ม onboarding trigger และวัด activation ภายใน 7 วัน</p>
+            <div class="mt-3 flex flex-wrap gap-2 text-xs">
+              <span class="rounded-full bg-bg px-2 py-1">semantic: 2 hits</span>
+              <span class="rounded-full bg-bg px-2 py-1">keyword: 1 hit</span>
+              <span class="rounded-full bg-bg px-2 py-1">confidence: high</span>
+            </div>
+          </article>
 
-      <div class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-text-muted">Top Results</h2>
-          <button class="text-xs font-medium text-primary hover:text-primary/80">Filter</button>
-        </div>
+          <article class="rounded-2xl border border-borderc bg-surface p-5">
+            <div class="mb-2 flex items-start justify-between">
+              <h2 class="font-semibold">Tuesday Growth Sync</h2>
+              <span class="text-xs text-texts">updated 2 days ago</span>
+            </div>
+            <p class="text-sm text-texts">“…ทีมเห็นตรงกันว่า <mark class="rounded bg-brand/10 px-1">retention Q3</mark> ต้องผูกกับ activation metric และการทดลอง onboarding แบบใหม่…”</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span class="rounded-full bg-ai/10 px-2 py-1 text-ai">Semantic match 0.92</span>
+              <span class="rounded-full bg-bg px-2 py-1">tag: growth</span>
+              <button class="rounded-full border border-borderc px-2 py-1">Open context</button>
+            </div>
+          </article>
 
-        <div class="bg-surface rounded-lg p-4 shadow-soft hover:shadow-float transition-shadow cursor-pointer group">
-          <div class="flex justify-between items-start mb-2">
-            <h3 class="font-bold text-text-main group-hover:text-primary transition-colors">Tuesday Meeting Notes</h3>
-            <span class="text-xs text-text-muted">2 days ago</span>
+          <article class="rounded-2xl border border-borderc bg-surface p-5">
+            <div class="mb-2 flex items-start justify-between">
+              <h2 class="font-semibold">Q3 Budget Alignment</h2>
+              <span class="text-xs text-texts">updated 5 days ago</span>
+            </div>
+            <p class="text-sm text-texts">“…ปรับงบจาก paid ads ไปที่ lifecycle program เพื่อหนุน <mark class="rounded bg-brand/10 px-1">long-term retention</mark>…”</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span class="rounded-full bg-ai/10 px-2 py-1 text-ai">Hybrid match 0.87</span>
+              <span class="rounded-full bg-bg px-2 py-1">tag: finance</span>
+              <button class="rounded-full border border-borderc px-2 py-1">Open context</button>
+            </div>
+          </article>
+        </section>
+
+        <aside class="space-y-4">
+          <div class="rounded-2xl border border-borderc bg-surface p-4">
+            <h3 class="text-sm font-semibold">Why these results</h3>
+            <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-texts">
+              <li>Intent ใกล้เคียงกับ “Q3 retention strategy”</li>
+              <li>มี entity overlap: Q3, activation, onboarding</li>
+              <li>freshness + relevance score ผ่าน threshold</li>
+            </ul>
           </div>
-          <p class="text-sm text-text-muted leading-relaxed line-clamp-3">
-            ...discussed the roadmap for the upcoming quarter. The
-            <span class="bg-[#DBEAFE] text-text-main px-0.5 rounded">Q3 strategy</span> needs to pivot towards
-            organic channels...
-          </p>
-          <div class="mt-3 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-accent-success"></span>
-            <span class="text-xs text-text-muted">Marketing</span>
-          </div>
-        </div>
-      </div>
-    </main>
 
-    <nav class="fixed bottom-0 w-full bg-surface border-t border-gray-100 px-6 pb-6 pt-3 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.05)] z-20">
-      <div class="flex justify-between items-center max-w-md mx-auto">
-        <a class="flex flex-col items-center justify-center gap-1 text-text-muted hover:text-primary transition-colors w-12" href="#">
-          <span class="material-symbols-outlined" style="font-size: 24px">home</span>
-          <span class="text-[10px] font-medium">Home</span>
-        </a>
-        <a class="flex flex-col items-center justify-center gap-1 text-primary w-12" href="#">
-          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 24px">search</span>
-          <span class="text-[10px] font-medium">Search</span>
-        </a>
-      </div>
-    </nav>
+          <div class="rounded-2xl border border-borderc bg-surface p-4">
+            <h3 class="text-sm font-semibold">Safety Filters</h3>
+            <div class="mt-3 space-y-2 text-sm text-texts">
+              <label class="flex items-center justify-between"><span>Exclude sensitive notes</span><input type="checkbox" checked /></label>
+              <label class="flex items-center justify-between"><span>Team scope only</span><input type="checkbox" checked /></label>
+              <label class="flex items-center justify-between"><span>Show citation required only</span><input type="checkbox" checked /></label>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
   </body>
 </html>
