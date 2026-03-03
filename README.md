@@ -1,6 +1,8 @@
-# RAG Event-Driven Memory Platform
+# SmartNote-AI: RAG Event-Driven Memory Platform
 
-## Short Description
+> **Status:** This repository is currently architecture-first (contract and platform blueprint). It defines production constraints, data flow, and deployment baseline for implementation teams.
+
+## Overview
 
 Production-grade RAG architecture built on:
 - Node.js services
@@ -14,7 +16,31 @@ Production-grade RAG architecture built on:
 This repository defines the structural contract of the system.
 All implementations MUST follow this topology and data flow.
 
-## Long Description
+## Repository Contents
+
+- `README.md` — system architecture contract and operations baseline
+- `docs/` — deep technical specifications and design references
+- `prisma/schema.prisma` — core data model baseline
+- `sql/` — SQL scripts (pgvector + operational rollouts)
+- `k8s/` — Kubernetes manifests for autoscaling and CI/CD deployment flow
+
+## Quick Start (Local Reference Environment)
+
+This project includes `docker-compose.yml` for standing up local infrastructure dependencies.
+
+```bash
+docker compose up -d
+```
+
+Recommended next steps:
+
+1. Initialize PostgreSQL extensions (`pgvector`) via scripts in `sql/`.
+2. Apply Prisma migrations/schema for your service implementation.
+3. Start service workers and verify Kafka topic provisioning matches the contract below.
+
+> Note: Service code may be introduced incrementally, but event naming, outbox rules, and tenant isolation MUST remain compatible with this README contract.
+
+## System Intent
 
 This application implements a fully event-driven Retrieval-Augmented Generation (RAG) system designed for:
 
@@ -117,6 +143,19 @@ Retrieval optimized for:
 - Kafka key design
 - pgvector index strategy
 
+## Implementation Checklist
+
+Use this checklist before promoting any environment:
+
+- [ ] API writes domain data + outbox in a single transaction
+- [ ] Outbox publisher is idempotent and retriable
+- [ ] Consumers use manual commits and are replay-safe
+- [ ] All read/write paths include `tenant_id`
+- [ ] Kafka keys include tenant scope
+- [ ] DLQ (`memory.failed`) is configured and monitored
+- [ ] Vector queries include tenant filter and index tuning
+- [ ] Autoscaling limits are aligned with partition counts
+
 ## Deployment Model
 
 - Docker-based
@@ -124,6 +163,23 @@ Retrieval optimized for:
 - Stateless services
 - Externalized configuration
 - Observability mandatory
+
+## Recommended Observability Baseline
+
+- Traces: request lifecycle across API → Kafka → workers
+- Metrics: consumer lag, per-topic throughput, retry count, DLQ rate
+- DB metrics: write latency, lock waits, vector query latency, replica lag
+- Logs: structured JSON logs with `tenantId`, `memoryId`, `queryId`, `eventType`
+
+## Documentation Map
+
+Key references for implementers:
+
+- `docs/production-rag-kafka-node-prisma-postgres.md`
+- `docs/background-queue-worker-and-kafka-rag.md`
+- `docs/agent-memory-layer-er.md`
+- `docs/smartnote-ai-technical-spec-th.md`
+- `docs/codebase-audit-fix-proposals-th.md`
 
 This document defines architectural boundaries.
 All contributors must comply.
