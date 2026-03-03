@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -12,15 +16,24 @@ jobs:
   workflow-health:
     name: ตรวจสอบความเสถียรของ GitHub Actions
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate workflow syntax with actionlint
         uses: rhysd/actionlint@v1
 
+      - name: Validate critical workflow files exist
+        run: |
+          set -euo pipefail
+          test -f .github/workflows/ci.yml
+          test -f .github/workflows/dependency-review.yml
+          test -f .github/workflows/deploy.yml
+
   docs-mockups:
     name: ตรวจสอบหน้า mockup
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -31,13 +44,29 @@ jobs:
 
       - name: Validate baseline UX spec docs and README mapping
         run: |
+          set -euo pipefail
           test -f docs/ai-ux-design-system-th.md
           test -f docs/editor-ui-mockup.html
           rg -q "UX Specification Baseline \(Always Included\)" README.md
+          rg -q "AI Safety UX Requirements \(Baseline\)" README.md
           rg -q "docs/ai-ux-design-system-th.md" README.md
           rg -q "docs/smartnote-serene-dashboard-mockup.html" README.md
           rg -q "docs/smartnote-serene-search-mockup.html" README.md
           rg -q "docs/editor-ui-mockup.html" README.md
+
+  dependency-guardrails:
+    name: ตรวจสอบการพึ่งพา
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure dependency review workflow is present and pinned
+        run: |
+          set -euo pipefail
+          test -f .github/workflows/dependency-review.yml
+          rg -q "uses: actions/dependency-review-action@v4" .github/workflows/dependency-review.yml
+          rg -q "pull_request:" .github/workflows/dependency-review.yml
 
   build-test:
     name: สร้าง-ทดสอบ (${{ matrix.service_label }})

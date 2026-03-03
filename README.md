@@ -86,6 +86,17 @@ Minimum UX documentation that must stay up to date:
 
 CI guardrails in `.github/workflows/ci.yml` enforce that this UX baseline remains documented in `README.md`.
 
+
+### CI Stability and UX Safety Standard A
+
+For `pull_request` checks, CI enforces three minimum gates:
+
+1. **Workflow stability gate**: validates GitHub Actions workflow health checks remain active.
+2. **Mockup and UX baseline gate**: validates key UX mockups/spec documents exist and stay mapped in this README.
+3. **Dependency guardrail gate**: validates dependency review workflow remains present for PR dependency risk detection.
+
+These gates are the baseline Standard A controls for UX safety visibility and release consistency.
+
 ## Google Cloud SDK Installation (for Stitch Authentication)
 
 If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
