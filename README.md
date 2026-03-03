@@ -345,3 +345,9 @@ Always ensure:
 - Keep manual offset commits and idempotent processing.
 - Add graceful shutdown hooks so consumers commit/disconnect on SIGTERM.
 - Monitor lag, partition skew, rebalance frequency, per-message processing latency, DB write latency, and vector insert latency.
+
+## Detailed Production Blueprint
+
+For full production topology, partitioning strategy, and consumer configuration, see:
+
+- `docs/production-rag-kafka-node-prisma-postgres.md`
