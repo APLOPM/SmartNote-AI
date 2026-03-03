@@ -148,6 +148,16 @@ CI is configured to remain resilient when transient failures occur:
 - Build matrix jobs use retry logic for install/lint/test/build/prisma validation to reduce flaky failures.
 - Backoff timing is centralized in CI environment variables so reliability can be tuned without changing each command.
 - UX baseline checks remain mandatory to enforce safety markers and bilingual documentation continuity.
+- When selected checks fail due to transient infra/network causes, CI applies retry + backoff automatically before marking jobs as failed.
+
+### CI/CD Auto-scaling Policy for Flaky Checks
+
+For jobs that commonly fail due to temporary runner saturation or package registry instability, CI uses an auto-scaling style retry policy:
+
+- Retry budget is controlled by `CI_RETRY_MAX`.
+- Progressive backoff is controlled by `CI_RETRY_BACKOFF_SECONDS`.
+- Install/lint/test/prisma validate steps use standardized retry wrappers to reduce false-negative failures.
+- Failures that persist after retry budget are treated as real defects and block release.
 
 This repository treats CI stability and UX safety controls as release-blocking quality standards.
 
