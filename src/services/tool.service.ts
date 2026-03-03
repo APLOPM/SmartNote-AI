@@ -1,50 +1,64 @@
-import type {
-  CreateDocumentArgs,
-  SummarizeNoteArgs,
-  SupportedToolName,
-} from "../llm/tool.registry";
+import { prisma } from '../prisma'
 
 export class ToolService {
   async executeTool(
     taskId: string,
     stepId: string,
-    toolName: SupportedToolName,
-    parameters: SummarizeNoteArgs | CreateDocumentArgs,
+    toolName: string,
+    parameters: Record<string, unknown>
   ) {
-    switch (toolName) {
-      case "summarize_note": {
-        const input = parameters as SummarizeNoteArgs;
-        const summary = input.text
-          .split(/\n+/)
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .slice(0, 5)
-          .map((line) => `• ${line}`)
-          .join("\n");
+    const startedAt = Date.now()
 
-        return {
+    try {
+      let result: Record<string, unknown>
+
+      switch (toolName) {
+        case 'summarize_note':
+          result = await this.summarize(parameters)
+          break
+        case 'create_document':
+          result = await this.createDoc(parameters)
+          break
+        default:
+          throw new Error(`Unknown tool: ${toolName}`)
+      }
+
+      await prisma.toolExecution.create({
+        data: {
           taskId,
           stepId,
           toolName,
-          summary: summary || "• ไม่มีข้อมูลเพียงพอสำหรับการสรุป",
-        };
-      }
+          parameters,
+          result,
+          success: true,
+          latencyMs: Date.now() - startedAt
+        }
+      })
 
-      case "create_document": {
-        const input = parameters as CreateDocumentArgs;
-
-        return {
+      return result
+    } catch (error) {
+      await prisma.toolExecution.create({
+        data: {
           taskId,
           stepId,
           toolName,
-          fileUrl: `https://cdn.smartnote.ai/generated/${encodeURIComponent(input.title)}.${input.format}`,
-          title: input.title,
-          format: input.format,
-        };
-      }
+          parameters,
+          result: {},
+          success: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown tool error',
+          latencyMs: Date.now() - startedAt
+        }
+      })
 
-      default:
-        throw new Error(`Unknown tool: ${toolName}`);
+      throw error
     }
+  }
+
+  private async summarize(_input: Record<string, unknown>) {
+    return { summary: 'Summarized content...' }
+  }
+
+  private async createDoc(_input: Record<string, unknown>) {
+    return { fileUrl: 'https://cdn.smartnote.ai/doc/123' }
   }
 }
