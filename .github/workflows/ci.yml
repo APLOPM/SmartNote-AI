@@ -9,6 +9,17 @@ permissions:
   contents: read
 
 jobs:
+  docs-mockups:
+    name: ตรวจสอบหน้า mockup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate mockup files exist
+        run: |
+          test -f docs/smartnote-serene-dashboard-mockup.html
+          test -f docs/smartnote-serene-search-mockup.html
+
   build-test:
     name: สร้าง-ทดสอบ (${{ matrix.service_label }})
     runs-on: ubuntu-latest
