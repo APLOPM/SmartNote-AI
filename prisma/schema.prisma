@@ -7,75 +7,177 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//
+// ENUMS
+//
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum MemoryRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+enum QueryStatus {
+  RECEIVED
+  CONTEXT_READY
+  COMPLETED
+  FAILED
+}
+
+//
+// CORE TENANCY
+//
+
 model Tenant {
   id        String   @id @default(uuid())
   name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  users     User[]
-  threads   Thread[]
-  memories  Memory[]
+  users    User[]
+  threads  Thread[]
+  memories Memory[]
+  queries  QueryRequest[]
 }
 
 model User {
   id        String   @id @default(uuid())
   tenantId  String
-  email     String   @unique
+  email     String
+  role      UserRole @default(MEMBER)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
 }
 
-model Thread {
-  id        String   @id @default(uuid())
-  tenantId  String
-  summary   String?
-  createdAt DateTime @default(now())
+//
+// THREAD & MEMORY LAYER
+//
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+model Thread {
+  id         String   @id @default(uuid())
+  tenantId   String
+  title      String?
+  summary    String?
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   memories Memory[]
+
+  @@index([tenantId])
 }
 
 model Memory {
-  id        String   @id @default(uuid())
-  tenantId  String
-  threadId  String
-  role      String
-  content   String
-  embedding Bytes?   // pgvector stored via raw SQL
-  createdAt DateTime @default(now())
+  id         String     @id @default(uuid())
+  tenantId   String
+  threadId   String
+  role       MemoryRole
+  content    String
+  tokenCount Int?
+  metadata   Json?
+  embedding  Bytes?     // actual vector column added via SQL migration
+  isEmbedded Boolean    @default(false)
+  isIndexed  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  thread Thread @relation(fields: [threadId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([threadId])
+  @@index([tenantId, createdAt])
 }
 
-model Outbox {
-  id        String   @id @default(uuid())
-  topic     String
-  key       String
-  payload   Json
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([published])
-}
+//
+// QUERY LIFECYCLE (RAG REQUEST FLOW)
+//
 
 model QueryRequest {
-  id        String   @id @default(uuid())
-  tenantId  String
-  userId    String
-  query     String
-  createdAt DateTime @default(now())
+  id           String      @id @default(uuid())
+  tenantId     String
+  userId       String
+  query        String
+  status       QueryStatus @default(RECEIVED)
+  tokenUsage   Int?
+  errorMessage String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  response QueryResponse?
 
   @@index([tenantId])
+  @@index([tenantId, status])
 }
 
 model QueryResponse {
-  id        String   @id @default(uuid())
-  requestId String   @unique
-  response  String
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  requestId  String   @unique
+  response   String
+  model      String?
+  tokenUsage Int?
+  createdAt  DateTime @default(now())
+
+  request QueryRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+//
+// OUTBOX PATTERN (Exactly-Once Event Publishing)
+//
+
+model OutboxEvent {
+  id          String       @id @default(uuid())
+  topic       String
+  key         String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  retryCount  Int          @default(0)
+  lastError   String?
+  createdAt   DateTime     @default(now())
+  publishedAt DateTime?
+
+  @@index([status])
+  @@index([topic])
+}
+
+//
+// OPTIONAL: AUDIT / OBSERVABILITY
+//
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String?
+  entityType String
+  entityId   String
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
 }
