@@ -1,0 +1,32 @@
+name: Algorithmia Test Algo
+
+on:
+  workflow_dispatch:
+    inputs:
+      algorithm_name:
+        description: "ชื่อของอัลกอริทึมที่ต้องการทดสอบ"
+        required: true
+        type: string
+      cases:
+        description: "รายการ JSON ของกรณีทดสอบ (เช่น [{\"input\":{...},\"output\":{...}}])"
+        required: true
+        type: string
+      api_address:
+        description: "ที่อยู่ API สำหรับคลัสเตอร์ Algorithmia"
+        required: false
+        default: "https://api.algorithmia.com"
+        type: string
+
+jobs:
+  test-algorithm:
+    name: Run Algorithmia test-algo-action
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Algorithmia test-algo
+        uses: algorithmiaio/test-algo-action@v0.1.1-rc6
+        with:
+          regular_api_key: ${{ secrets.ALGORITHMIA_REGULAR_API_KEY }}
+          api_address: ${{ inputs.api_address }}
+          algorithm_name: ${{ inputs.algorithm_name }}
+          cases: ${{ inputs.cases }}
