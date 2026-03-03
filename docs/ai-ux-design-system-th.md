@@ -13,6 +13,43 @@
 - สถานะระบบและปุ่มคำสั่งหลักต้องอ่านเข้าใจง่ายทั้ง TH/EN
 - ทุกการเปลี่ยนแปลง UX ที่กระทบข้อความ ต้องอัปเดตเอกสารและ mockup ควบคู่กัน
 
+
+## 0.1 Hybrid Experience Modes (Serene / Nova)
+
+SmartNote ใช้แนวทาง **Hybrid Design System**: มีแกนกลางร่วม (Core DNA) และโหมดประสบการณ์ 2 แบบที่ผู้ใช้สลับได้ทันทีโดยไม่สูญเสียข้อมูล
+
+### Core DNA (ใช้ร่วมกันทุกโหมด)
+- Typography: Sans-serif เดียวกัน (`Inter`, `Noto Sans Thai`, `SF Pro` fallback)
+- Spacing: 4px/8px grid เดียวกัน
+- Icon set: ชุดไอคอนเดียวกัน ปรับเฉพาะน้ำหนัก (weight) ตามโหมด
+- Accessibility: ต้องผ่าน WCAG 2.1 AA ทุกโหมด
+
+### Mode A: Serene (Minimal + Friendly)
+- Background หลัก: `#F9FAFB`
+- AI Accent: `#2B6EB0`
+- Radius พื้นฐาน: `8px`
+- Personality: living dot ขนาดเล็กเพื่อบอกสถานะ AI
+- Card elevation: soft shadow (ไม่ใช้หนัก)
+
+### Mode B: Nova (Tech Productivity)
+- Background หลัก: `#0A0A0A`
+- Accent: `#7B2EDA` (primary) หรือ `#00FF9D` (secondary neon)
+- Radius พื้นฐาน: `4px`
+- Personality: glowing orb / particle micro-effect (ต้องรองรับ reduced motion)
+- Card elevation: subtle glow edge
+
+### Context-aware behavior by page
+- Chat: Serene = โทนสนทนาเป็นมิตร, Nova = โทนสั่งงานเชิง productivity
+- Editor: ใช้โครง Minimal เหมือนกันทั้งสองโหมด แต่เปลี่ยน highlight/action colors ตามโหมด
+- Dashboard: Serene เน้นภาพรวมที่อ่านสบาย, Nova เน้น metric density + visual telemetry
+
+### Onboarding + Dynamic Switching
+- ต้องมี preview ให้เลือกโหมดตอนใช้งานครั้งแรก
+- ผู้ใช้ต้องสลับโหมดได้ตลอดเวลาโดยไม่ reset session หรือสูญเสียข้อมูล
+- ควรมี A/B testing สำหรับ engagement และ completion rate ในทั้งสองโหมด
+
+---
+
 ## 1) เป้าหมายระบบ UX
 
 1. ลด Cognitive Load และลดความเสี่ยงจาก AI
