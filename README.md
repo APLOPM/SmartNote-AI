@@ -46,10 +46,19 @@ Recommended next steps:
 
 To keep implementation aligned with product UX expectations, every feature proposal and release checklist MUST include these UX references:
 
-- `docs/ai-ux-design-system-th.md` (design tokens, interaction rules, accessibility, AI Safety UX Standard A)
+- `docs/ai-ux-design-system-th.md` (design tokens, interaction rules, accessibility, AI Safety UX Standard A, and Hybrid modes: Serene/Nova)
 - `docs/smartnote-serene-dashboard-mockup.html` (dashboard UX baseline)
 - `docs/smartnote-serene-search-mockup.html` (search UX baseline)
 - `docs/editor-ui-mockup.html` (editor UX baseline)
+
+### Hybrid UX Modes (Shared DNA)
+
+SmartNote now defines 2 user-selectable UX modes under one core design system:
+
+- **Serene**: minimal + friendly visual language (light surfaces, calm cards, human-like AI tone).
+- **Nova**: tech productivity visual language (dark terminal-like feel, high-signal metrics, command-style interaction).
+
+Both modes MUST share typography, spacing grid, iconography baseline, AI safety controls, and bilingual TH/EN quality gates.
 
 ## AI Safety UX Requirements (Baseline)
 
@@ -129,6 +138,18 @@ brew install --cask google-cloud-sdk
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 ```
 
+
+
+## CI Stability for Workflow, Dependency, and UX Guardrails
+
+CI is configured to remain resilient when transient failures occur:
+
+- Dependency validation and workflow health checks are required baseline gates.
+- Build matrix jobs use retry logic for install/lint/test/build/prisma validation to reduce flaky failures.
+- Backoff timing is centralized in CI environment variables so reliability can be tuned without changing each command.
+- UX baseline checks remain mandatory to enforce safety markers and bilingual documentation continuity.
+
+This repository treats CI stability and UX safety controls as release-blocking quality standards.
 
 ## CI Prerequisites (Security & Dependency Review)
 
