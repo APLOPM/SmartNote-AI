@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedding
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: embedding
+  template:
+    metadata:
+      labels:
+        app: embedding
+    spec:
+      containers:
+        - name: embedding
+          image: ghcr.io/org/embedding:TAG
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          env:
+            - name: NODE_ENV
+              value: production
