@@ -180,6 +180,7 @@ Key references for implementers:
 - `docs/agent-memory-layer-er.md`
 - `docs/smartnote-ai-technical-spec-th.md`
 - `docs/codebase-audit-fix-proposals-th.md`
+- `docs/self-hosted-runner-guide-th.md`
 
 This document defines architectural boundaries.
 All contributors must comply.
