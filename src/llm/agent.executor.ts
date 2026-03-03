@@ -65,6 +65,10 @@ export class AgentExecutor {
         };
       }
 
+      if (stepCount >= maxSteps) {
+        throw new Error(`Max steps exceeded (${maxSteps}) before executing tool calls`);
+      }
+
       for (const toolCall of message.tool_calls) {
         const functionName = toolCall.function.name as SupportedToolName;
         const stepId = `${taskId}-step-${stepCount}`;
