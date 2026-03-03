@@ -31,4 +31,12 @@ export class MemoryService {
       }
     })
   }
+
+  async getTaskMemories(tenantId: string, taskId: string) {
+    return prisma.longTermMemoryLink.findMany({
+      where: { tenantId, taskId },
+      include: { memory: true },
+      orderBy: { createdAt: 'desc' }
+    })
+  }
 }

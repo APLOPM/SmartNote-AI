@@ -1,5 +1,10 @@
 import { prisma } from '../prisma'
 
+export type ToolExecutionResult = {
+  output: Record<string, unknown>
+  costUsd: number
+}
+
 export class ToolService {
   async executeTool(
     tenantId: string,
@@ -7,7 +12,7 @@ export class ToolService {
     stepId: string,
     toolName: string,
     parameters: Record<string, unknown>
-  ) {
+  ): Promise<ToolExecutionResult> {
     const startedAt = Date.now()
 
     try {
@@ -24,6 +29,8 @@ export class ToolService {
           throw new Error(`Unknown tool: ${toolName}`)
       }
 
+      const costUsd = this.estimateCostUsd(toolName, parameters, result)
+
       await prisma.toolExecution.create({
         data: {
           tenantId,
@@ -33,11 +40,15 @@ export class ToolService {
           parameters,
           result,
           success: true,
-          latencyMs: Date.now() - startedAt
+          latencyMs: Date.now() - startedAt,
+          costUsd
         }
       })
 
-      return result
+      return {
+        output: result,
+        costUsd
+      }
     } catch (error) {
       await prisma.toolExecution.create({
         data: {
@@ -63,5 +74,23 @@ export class ToolService {
 
   private async createDoc(_input: Record<string, unknown>) {
     return { fileUrl: 'https://cdn.smartnote.ai/doc/123' }
+  }
+
+  private estimateCostUsd(
+    toolName: string,
+    parameters: Record<string, unknown>,
+    result: Record<string, unknown>
+  ) {
+    const payloadSize = JSON.stringify(parameters).length + JSON.stringify(result).length
+
+    if (toolName === 'summarize_note') {
+      return Number((0.0001 + payloadSize * 0.000001).toFixed(4))
+    }
+
+    if (toolName === 'create_document') {
+      return Number((0.0002 + payloadSize * 0.0000005).toFixed(4))
+    }
+
+    return 0
   }
 }
