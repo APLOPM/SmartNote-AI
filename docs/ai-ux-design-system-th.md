@@ -1,336 +1,158 @@
 # SmartNote AI UX Design System (Thai)
 
-เอกสารนี้สรุปหลักการ UX ระดับระบบสำหรับ SmartNote AI เพื่อให้ทีม Product, Design และ Engineering ใช้เป็น baseline เดียวกันในการออกแบบและพัฒนา UI/UX ที่ต่อเนื่องทั้ง Web และ Mobile
+เอกสารนี้เป็น **Single Source of Truth** สำหรับ Token, Interaction Rules, Accessibility และ AI Safety UX ของ SmartNote AI เพื่อให้ Product, Design, Engineering และ QA ใช้มาตรฐานเดียวกันเสมอ
 
 ---
 
-## 1) UX Design Principles (System-Level)
+## 1) เป้าหมายระบบ UX
 
-### 1.1 Cognitive Load ต่ำ
-- ไม่แสดง AI controls ที่ไม่จำเป็นในหน้าหลัก
-- ฟีเจอร์ขั้นสูง (Agent tools, RAG context, debug) ต้องซ่อนไว้หลัง `Advanced` toggle
-
-### 1.2 Context Continuity
-- ทุกหน้าควรเรียกใช้ AI assistant ได้
-- บริบทการทำงานระหว่าง Chat ↔ Editor ↔ Search ควรเชื่อมถึงกัน
-
-### 1.3 AI as Assistant, Not Driver
-- AI มีหน้าที่เสนอแผน/ข้อแนะนำก่อน
-- ผู้ใช้ต้องยืนยันก่อน execute workflow ที่สำคัญ
-- Tool calls ควร inspect ได้ (โปร่งใส)
-
-### 1.4 Latency Transparency
-UI ต้องสื่อสถานะชัดเจนระหว่างรอผล เช่น:
-- Typing indicator
-- Tool running indicator
-- Streaming response
-
-### 1.5 Progressive Disclosure
-- แสดงข้อมูลที่จำเป็นก่อน
-- Insight ขั้นสูง (token usage, source nodes, retrieval score) ให้เปิดดูภายหลังได้
+1. ลด Cognitive Load และลดความเสี่ยงจาก AI
+2. รักษา Context ต่อเนื่องระหว่าง Chat ↔ Editor ↔ Search
+3. ทำให้การใช้ AI โปร่งใส ตรวจสอบได้ และยืนยันได้ก่อนทำงานสำคัญ
+4. รักษาความเสถียรเชิง UX ด้วย **Standard A** (Safety + Reliability Baseline)
 
 ---
 
-## 2) Chat Interface (Core Interaction Layer)
+## 2) Design Tokens (Global)
 
-### 2.1 Layout Structure
-```text
-┌─────────────────────────────────────────┐
-│ ← SmartNote AI Assistant        ⚙ ⋯   │
-├─────────────────────────────────────────┤
-│ Conversation Timeline                  │
-│                                         │
-│  [User Bubble]                         │
-│  [AI Bubble]                           │
-│  [Tool Card]                           │
-│  [Quick Action Buttons]                │
-│                                         │
-├─────────────────────────────────────────┤
-│  @  📎  🎤  Type message...        ➤   │
-└─────────────────────────────────────────┘
-```
+> ใช้ token เท่านั้น ห้าม hardcode สี/spacing ใน component ที่ production
 
-### 2.2 Chat States (State Machine)
-| State | UI Behavior |
-|---|---|
-| Idle | Input enabled |
-| Streaming | AI bubble streaming text |
-| ToolExecuting | Tool card with progress |
-| AwaitingConfirmation | Confirm/Cancel buttons |
-| Error | Retry + Details toggle |
+### 2.1 Color Tokens
 
-### 2.3 AI Message Types
-1. **Plain Response**
-   - รองรับ Markdown
-   - Bullet lists จัดรูปแบบอัตโนมัติ
-2. **Structured Output Card**
-   - Action items
-   - Task list
-   - Table
-   - Timeline
-   - Email draft
-3. **Tool Card (Agent Execution UI)**
+| Token | ค่า | การใช้งาน |
+|---|---|---|
+| `--color-bg` | `#F6F8FC` | พื้นหลังหลัก |
+| `--color-surface` | `#FFFFFF` | Card/Panel |
+| `--color-surface-muted` | `#EEF2FF` | Surface รอง |
+| `--color-text-primary` | `#0F172A` | ข้อความหลัก |
+| `--color-text-secondary` | `#475569` | ข้อความรอง |
+| `--color-brand-500` | `#2563EB` | ปุ่มหลัก / ลิงก์ |
+| `--color-brand-600` | `#1D4ED8` | Hover ปุ่มหลัก |
+| `--color-ai-accent` | `#7C3AED` | AI Highlight |
+| `--color-success` | `#16A34A` | สถานะสำเร็จ |
+| `--color-warning` | `#D97706` | คำเตือน |
+| `--color-danger` | `#DC2626` | Error/Destructive |
+| `--color-border` | `#CBD5E1` | เส้นขอบ |
+| `--color-focus` | `#38BDF8` | Focus ring |
 
-```text
-┌─────────────────────────────┐
-│ 🔧 Creating PowerPoint...   │
-│ Step 2 of 4                 │
-│ Progress: ███████░░         │
-│ [View details]              │
-└─────────────────────────────┘
-```
+### 2.2 Typography Tokens
 
-รายละเอียดใน detail view:
-- Called function
-- Parameters
-- Status
-- Result
+- `--font-family-base`: `Inter, "Noto Sans Thai", system-ui, sans-serif`
+- `--font-size-xs`: `12px`
+- `--font-size-sm`: `14px`
+- `--font-size-md`: `16px`
+- `--font-size-lg`: `20px`
+- `--font-size-xl`: `24px`
+- `--line-height-body`: `1.6`
+- `--line-height-heading`: `1.3`
 
-### 2.4 Quick Actions Layer
-ใต้ AI response ควรมี quick actions เช่น:
-- `[✉ Draft Email]`
-- `[📅 Create Event]`
-- `[🧠 Save as Memory]`
+### 2.3 Spacing / Radius / Shadow Tokens
 
-โดย quick action ต้อง trigger ผ่าน structured function-calling
+- Spacing scale: `4, 8, 12, 16, 20, 24, 32`
+- Radius: `8, 12, 16, 9999`
+- Shadow:
+  - `--shadow-soft`: `0 8px 24px rgba(15, 23, 42, 0.08)`
+  - `--shadow-elevated`: `0 16px 30px rgba(15, 23, 42, 0.14)`
 
-### 2.5 Agent Transparency Toggle
-เมนู dropdown ขนาดเล็กสำหรับ:
-- View retrieved context
-- View embeddings used
-- View reasoning summary (**ไม่**เปิด chain-of-thought แบบเต็ม)
+### 2.4 Motion Tokens
 
-### 2.6 Advanced Mode (Power Users)
-เมื่อเปิด Advanced mode ให้เห็น:
-- Tool console view
-- Token usage
-- Model used
-- Latency metrics
-- Retry with different model
+- `--motion-fast`: `120ms`
+- `--motion-base`: `180ms`
+- `--motion-slow`: `280ms`
+- Easing มาตรฐาน: `cubic-bezier(.2,.8,.2,1)`
+- ต้องรองรับ `prefers-reduced-motion`
 
 ---
 
-## 3) Note Editor (AI-Augmented Writing)
+## 3) UX Rules (System Rules)
 
-### 3.1 Layout
-```text
-┌─────────────────────────────────────────┐
-│ ← Note Title                 ⭐ ⋯      │
-├─────────────────────────────────────────┤
-│ Tags: #meeting #ai                    │
-├─────────────────────────────────────────┤
-│ Editor Canvas                         │
-│                                       │
-│                                       │
-│                                       │
-│                                       │
-│ AI Sidebar (collapsible)              │
-└─────────────────────────────────────────┘
-```
+### 3.1 Rule: AI ต้องไม่ทำงานเสี่ยงโดยอัตโนมัติ
+- งานที่กระทบข้อมูล/การแชร์/การลบ ต้องมีขั้น Confirm
+- ปุ่มยืนยันต้องไม่เป็นค่า default ที่เผลอกดง่าย
 
-### 3.2 Editor Capabilities
-- Inline AI Suggestion
-  - แสดง suggestion สีเทา
-  - กด `Tab` เพื่อ accept
-- Highlight Actions (เมื่อผู้ใช้เลือกข้อความ)
-  - `[Summarize] [Expand] [Rewrite] [Translate] [Generate Tasks]`
+### 3.2 Rule: โปร่งใสแต่ไม่ overload
+- แสดงสถานะ `Thinking / Tool Running / Completed / Failed`
+- รายละเอียดระดับลึก (tool args, score) ให้ซ่อนหลัง toggle
 
-### 3.3 AI Sidebar Panel Modes
-- Improve writing
-- Convert to presentation
-- Extract tasks
-- Ask about this note
-- Generate mind map
+### 3.3 Rule: Context Continuity
+- จากผลค้นหาและจากโน้ต ต้องส่งต่อเข้า AI Chat ได้ทันที
+- ทุก AI action ต้องบอกว่ากำลังใช้ context จากส่วนใด
 
-### 3.4 Versioning UI
-- Version timeline slider
-- Show diff view
-- Restore option
+### 3.4 Rule: Recoverability
+- ทุก error state ต้องมี `Retry` และข้อความที่มนุษย์อ่านเข้าใจ
+- ห้ามเจอ dead-end screen
+
+### 3.5 Rule: Accessibility First
+- WCAG AA contrast ขั้นต่ำ
+- Keyboard-first focus order
+- Touch target ขั้นต่ำ 44x44px
 
 ---
 
-## 4) Dashboard (AI-Orchestrated Overview)
+## 4) AI Safety UX Standard A (บังคับใช้ขั้นต่ำ)
 
-### 4.1 Layout
-```text
-┌────────────────────────────┐
-│ Welcome back, Somchai     │
-├────────────────────────────┤
-│ Search Bar                │
-├────────────────────────────┤
-│ Quick Create Buttons      │
-├────────────────────────────┤
-│ Recent Notes              │
-├────────────────────────────┤
-│ AI Insights               │
-├────────────────────────────┤
-│ Smart Folders             │
-└────────────────────────────┘
-```
+### 4.1 มาตรฐานที่ต้องเห็นใน UI
+1. **Risk Notice** เมื่อ AI เรียกใช้เครื่องมือหรือบริบทสำคัญ
+2. **Source Transparency** แสดงแหล่งที่มา/คะแนนความเกี่ยวข้องแบบย่อ
+3. **Human Confirmation** ก่อน execute action สำคัญ
+4. **Policy Surface** มีพื้นที่บอก policy และผลบล็อก
+5. **Audit Clarity** ผู้ใช้เห็นว่า action ใดถูกเรียกด้วยพารามิเตอร์อะไร
 
-### 4.2 AI Insights Module
-ตัวอย่าง insight:
-- "3 action items overdue"
-- "Marketing plan connected to Budget 2026"
-- "Meeting transcript ready for review"
-
-ทุก insight ต้อง clickable และเปิดต่อใน Chat context ได้
+### 4.2 Checklist ก่อนปล่อยงาน
+- มี loading state และ error state ครบ
+- ไม่มี destructive auto-run
+- README และ CI ระบุ UX baseline docs ครบ
+- เอกสาร mockup (editor/search) อัปเดตตาม token ล่าสุด
 
 ---
 
-## 5) Search Interface (Hybrid Search UX)
+## 5) Component Contracts
 
-### 5.1 Search Modes
-- Keyword
-- Semantic
-- Hybrid (default)
+### 5.1 AI Response Card
+ต้องมี:
+- หัวข้อผลลัพธ์
+- เนื้อหาสรุป
+- สถานะแหล่งข้อมูล (`context badges`)
+- Quick Actions (`Refine`, `Open Source`, `Save as Note`)
 
-### 5.2 Result Card Structure
-- Note title
-- Snippet (highlighted)
-- Similarity score (optional toggle)
-- Tags
-- Last updated
+### 5.2 Tool Execution Card
+ต้องมี:
+- Tool Name
+- Progress
+- Current step
+- `View details`
+- `Cancel` (ถ้ายกเลิกได้)
 
-### 5.3 Advanced Search Panel
-ตัวกรองที่ควรมี:
-- Date
-- Tag
-- Has attachment
-- AI-generated only
-- Task only
-- Toggle `Exact match only`
-
-### 5.4 RAG Transparency
-Optional toggle เพื่ออธิบายผลค้นหา เช่น:
-- 2 results via semantic match
-- 1 via keyword match
+### 5.3 Confirmation Dialog
+ต้องมี:
+- เหตุผลที่ต้องยืนยัน
+- ผลกระทบของการยืนยัน
+- ปุ่ม `ยืนยัน` และ `ยกเลิก` ชัดเจน
 
 ---
 
-## 6) Mind Map View (Graph-Based Knowledge UX)
+## 6) Editor UX Baseline
 
-### 6.1 Interaction Model
-- Drag nodes
-- Zoom wheel
-- Expand children
-- Click to open note preview
-
-### 6.2 Node Types
-- Main Note
-- Sub-topic
-- Task
-- Linked Note
-- External reference
-
-ควรแยกสีแต่ละประเภทอย่างชัดเจน
-
-### 6.3 Export Options
-- PNG
-- PDF
-- Markdown hierarchy
-- JSON
+- มี AI Assistant ฝังด้านข้าง (collapsible)
+- มี inline suggestion + accept ผ่านคีย์ลัด
+- มี quick action จากข้อความที่เลือก
+- มี safety strip เมื่อใช้ external context
 
 ---
 
-## 7) Navigation System
+## 7) Semantic Search UX Baseline
 
-### 7.1 Mobile Bottom Navigation
-| Icon | Function |
-|---|---|
-| 🏠 | Dashboard |
-| 🔍 | Search |
-| 💬 | Chat |
-| 📁 | Notes |
-| ⚙ | Settings |
-
-### 7.2 Web Sidebar
-- Dashboard
-- Threads
-- Smart Folders
-- Shared
-- Trash
-- Settings
-
-รองรับ collapsible sidebar
+- รองรับ `Keyword / Semantic / Hybrid`
+- มี smart answer + citation preview
+- มี panel อธิบายเหตุผลการแมตช์ (why this result)
+- มีตัวกรองด้านความปลอดภัย (sensitive/source scope)
 
 ---
 
-## 8) Mobile-Specific UX Enhancements
+## 8) Governance
 
-### 8.1 Thumb-Optimized Layout
-- Input bar fixed ที่ด้านล่าง
-- Primary actions อยู่บริเวณมุมล่างขวา
-
-### 8.2 Voice-First Interaction
-- Long press mic → record → auto-transcribe
-
-### 8.3 Offline Mode UI
-แสดงสถานะชัดเจน เช่น:
-- `⚠ Offline – changes will sync later`
-- Queue icon พร้อม pending count
-
----
-
-## 9) Agent Workflow UX Pattern
-
-Pattern สำหรับงานซับซ้อน:
-**User → Agent Plan Preview → Confirm → Execute → Progress → Result**
-
-ตัวอย่าง preview:
-```text
-I will:
-1. Summarize meeting
-2. Generate report
-3. Draft email
-
-Proceed? [Yes] [Modify]
-```
-
-แนวทางนี้ช่วยป้องกัน runaway automation
-
----
-
-## 10) Visual Design System
-
-### 10.1 Color
-- Primary: Neutral modern blue
-- Accent: AI highlight purple
-- Success: Green
-- Warning: Amber
-- Error: Red
-
-### 10.2 Typography
-- Inter / SF Pro
-- Body: 14–16px
-- Header: 20–24px
-
-### 10.3 Elevation & Shape
-- Soft shadows
-- Rounded corners 12–16px
-- Minimal gradients
-
----
-
-## 11) Accessibility
-- รองรับ WCAG AA contrast
-- Keyboard navigation
-- Screen reader friendly labels
-- Reduce motion toggle
-
----
-
-## 12) UX Anti-Patterns to Avoid
-- Auto-executing destructive agent actions
-- Overloading UI with tool details ตั้งแต่แรก
-- Blocking editor ระหว่าง AI process
-- บังคับผู้ใช้ให้เข้าฟลู AI-first เสมอ
-
----
-
-## 13) Future UX Enhancements
-- Multi-agent panel (Research Agent / Writing Agent)
-- Knowledge Graph mode
-- Real-time collaboration cursors
-- Agent memory timeline viewer
-- AI workload dashboard (enterprise)
+หากแก้ token หรือ interaction rule ต้องอัปเดตพร้อมกันทั้ง:
+1. `docs/editor-ui-mockup.html`
+2. `docs/smartnote-serene-search-mockup.html`
+3. `README.md` ส่วน UX baseline
+4. CI gate ที่เกี่ยวข้อง
