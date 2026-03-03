@@ -40,6 +40,30 @@ Recommended next steps:
 
 > Note: Service code may be introduced incrementally, but event naming, outbox rules, and tenant isolation MUST remain compatible with this README contract.
 
+## Google Cloud SDK Installation (for Stitch Authentication)
+
+If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
+
+### Standalone Install
+
+```bash
+# Download and install (simplified for standard environments)
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL
+
+# Set local configuration to avoid prompts
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+```
+
+### Homebrew Install (macOS)
+
+```bash
+brew install --cask google-cloud-sdk
+
+# Set local configuration to avoid prompts
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+```
+
 ## System Intent
 
 This application implements a fully event-driven Retrieval-Augmented Generation (RAG) system designed for:
