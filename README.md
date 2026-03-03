@@ -41,6 +41,18 @@ Recommended next steps:
 
 > Note: Service code may be introduced incrementally, but event naming, outbox rules, and tenant isolation MUST remain compatible with this README contract.
 
+
+## UX Specification Baseline (Always Included)
+
+To keep implementation aligned with product UX expectations, every feature proposal and release checklist MUST include these UX references:
+
+- `docs/ai-ux-design-system-th.md` (design tokens, IA, interaction, accessibility)
+- `docs/smartnote-serene-dashboard-mockup.html` (dashboard UX baseline)
+- `docs/smartnote-serene-search-mockup.html` (search UX baseline)
+- `docs/editor-ui-mockup.html` (editor UX baseline)
+
+When updating architecture, workflows, or service contracts, add a UX impact note in the related PR description and verify these docs remain current.
+
 ## Google Cloud SDK Installation (for Stitch Authentication)
 
 If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
