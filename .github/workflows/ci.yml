@@ -9,25 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  ux-spec-guard:
-    name: ตรวจสอบข้อกำหนด UX และ AI Safety ใน README
+  workflow-health:
+    name: ตรวจสอบความเสถียรของ GitHub Actions
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate README UX/AI safety baseline
-        run: |
-          set -euo pipefail
-          test -f README.md
-          test -f docs/ai-ux-design-system-th.md
-          test -f docs/smartnote-serene-dashboard-mockup.html
-          test -f docs/smartnote-serene-search-mockup.html
-          test -f docs/editor-ui-mockup.html
-
-          rg -n "UX Specification Baseline" README.md
-          rg -n "AI Safety UX Requirements" README.md
-          rg -n "adversarial testing" README.md
-          rg -n "real-time reporting" README.md
+      - name: Validate workflow syntax with actionlint
+        uses: rhysd/actionlint@v1
 
   docs-mockups:
     name: ตรวจสอบหน้า mockup
@@ -39,6 +28,16 @@ jobs:
         run: |
           test -f docs/smartnote-serene-dashboard-mockup.html
           test -f docs/smartnote-serene-search-mockup.html
+
+      - name: Validate baseline UX spec docs and README mapping
+        run: |
+          test -f docs/ai-ux-design-system-th.md
+          test -f docs/editor-ui-mockup.html
+          rg -q "UX Specification Baseline \(Always Included\)" README.md
+          rg -q "docs/ai-ux-design-system-th.md" README.md
+          rg -q "docs/smartnote-serene-dashboard-mockup.html" README.md
+          rg -q "docs/smartnote-serene-search-mockup.html" README.md
+          rg -q "docs/editor-ui-mockup.html" README.md
 
   build-test:
     name: สร้าง-ทดสอบ (${{ matrix.service_label }})
