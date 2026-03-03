@@ -204,6 +204,7 @@ Key references for implementers:
 - `docs/background-queue-worker-and-kafka-rag.md`
 - `docs/agent-memory-layer-er.md`
 - `docs/smartnote-ai-technical-spec-th.md`
+- `docs/smartnote-ai-product-overview-th.md`
 - `docs/codebase-audit-fix-proposals-th.md`
 - `docs/self-hosted-runner-guide-th.md`
 
