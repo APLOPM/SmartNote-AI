@@ -350,4 +350,11 @@ Always ensure:
 
 For full production topology, partitioning strategy, and consumer configuration, see:
 
-- `docs/production-rag-kafka-node-prisma-postgres.md`
+### CI/CD Lock Principles
+
+- Migration runs before rollout.
+- Images are immutable (`sha` tags only in deployment flow).
+- Services are independently deployable.
+- Rollback is a single command (`kubectl rollout undo`).
+- No manual DB edits.
+- No direct production DB access.
