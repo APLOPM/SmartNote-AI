@@ -97,6 +97,27 @@ For `pull_request` checks, CI enforces three minimum gates:
 
 These gates are the baseline Standard A controls for UX safety visibility and release consistency.
 
+### Workflow Stabilization Checklist (CI Reliability)
+
+To keep CI stable while services evolve, maintain these rules:
+
+- Use lockfiles (`package-lock.json`) for each Node service so `npm ci` is deterministic.
+- Keep lint/test/build scripts optional in early-stage services, but add them as soon as service code is introduced.
+- Keep `actionlint` and critical workflow-file checks enabled in `ci.yml`.
+- Ensure `dependency-review.yml` remains active on `pull_request` to detect dependency risk before merge.
+- Keep concurrency cancellation enabled to prevent stale runs from masking current results.
+
+### UX Standard A: Minimum Safety Acceptance
+
+Before merging any PR that changes architecture, workflows, or dependencies, confirm:
+
+1. UX baseline docs and mockups still exist and are referenced in this README.
+2. AI safety UX requirements (monitoring/reporting/policy controls) remain visible in product documentation.
+3. Dependency review gate is still active for PRs.
+4. Workflow health checks (`actionlint` + critical workflow presence checks) are still active.
+
+These checks define **UX Safety Standard A** for this repository.
+
 ## Google Cloud SDK Installation (for Stitch Authentication)
 
 If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
