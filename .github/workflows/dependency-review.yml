@@ -16,7 +16,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check dependency graph support
+        id: depgraph
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          status_code=$(curl -sS -o /tmp/sbom.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/dependency-graph/sbom")
+
+          if [ "$status_code" = "200" ]; then
+            echo "supported=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "supported=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Dependency review skipped: dependency graph is not enabled or not supported for this repository (HTTP ${status_code}). Enable it at https://github.com/${{ github.repository }}/settings/security_analysis"
+          fi
+
       - name: Dependency Review
+        if: steps.depgraph.outputs.supported == 'true'
         uses: actions/dependency-review-action@v4
         with:
           comment-summary-in-pr: always
