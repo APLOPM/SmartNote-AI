@@ -11,6 +11,7 @@ env:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -26,7 +27,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect buildable service
+        id: detect
+        run: |
+          set -euo pipefail
+          dockerfile="${{ matrix.context }}/Dockerfile"
+          if [ -f "$dockerfile" ]; then
+            echo "buildable=true" >> "$GITHUB_OUTPUT"
+            echo "dockerfile=$dockerfile" >> "$GITHUB_OUTPUT"
+          else
+            echo "buildable=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skip image build for ${{ matrix.service }}: $dockerfile not found."
+          fi
+
       - name: Normalize image prefix
+        if: steps.detect.outputs.buildable == 'true'
         run: |
           echo "IMAGE_PREFIX=${REGISTRY}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
@@ -42,6 +57,7 @@ jobs:
         if: steps.detect.outputs.buildable == 'true'
         run: |
           docker build \
+            -f ${{ steps.detect.outputs.dockerfile }} \
             -t $IMAGE_PREFIX/${{ matrix.service }}:${{ github.sha }} \
             ${{ matrix.context }}
 

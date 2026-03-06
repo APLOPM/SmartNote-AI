@@ -17,10 +17,14 @@ on:
         default: "https://api.algorithmia.com"
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   test-algorithm:
     name: Run Algorithmia test-algo-action
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Algorithmia test-algo

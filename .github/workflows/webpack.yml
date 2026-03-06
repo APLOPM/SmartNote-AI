@@ -10,11 +10,18 @@ on:
 permissions:
   contents: read
 
+env:
+  CI_RETRY_MAX: 3
+  CI_RETRY_BACKOFF_SECONDS: 5
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
+      fail-fast: false
+      max-parallel: 2
       matrix:
         node-version: [18.x, 20.x, 22.x]
 
@@ -24,6 +31,7 @@ jobs:
       - name: Detect webpack project
         id: detect
         run: |
+          set -euo pipefail
           if [ -f package.json ]; then
             echo "has_package_json=true" >> "$GITHUB_OUTPUT"
           else
@@ -37,10 +45,32 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install dependencies (retry)
         if: steps.detect.outputs.has_package_json == 'true'
-        run: npm ci
+        run: |
+          set -euo pipefail
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s"
+              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          if [ -f package-lock.json ]; then
+            retry "$CI_RETRY_MAX" npm ci --no-audit --no-fund
+          else
+            retry "$CI_RETRY_MAX" npm install --no-audit --no-fund
+          fi
 
       - name: Build with webpack
         if: steps.detect.outputs.has_package_json == 'true'

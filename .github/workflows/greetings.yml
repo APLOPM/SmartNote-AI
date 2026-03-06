@@ -5,9 +5,13 @@ on:
   issues:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   greeting:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       issues: write
       pull-requests: write
@@ -16,5 +20,5 @@ jobs:
       - uses: actions/first-interaction@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: "Message that will be displayed on users' first issue"
-          pr-message: "Message that will be displayed on users' first pull request"
+          issue-message: "Thanks for opening your first issue in SmartNote-AI! / ขอบคุณที่เปิด issue แรกกับ SmartNote-AI"
+          pr-message: "Thanks for your first pull request! Please include UX & safety notes when UI/AI behavior changes. / ขอบคุณสำหรับ PR แรก โปรดแนบหมายเหตุ UX และความปลอดภัยเมื่อมีการเปลี่ยนแปลง UI/AI"
