@@ -1,381 +1,104 @@
-# SmartNote-AI: RAG Event-Driven Memory Platform
+# 🧠 SmartNote AI
 
-> **Status:** This repository is currently architecture-first (contract and platform blueprint). It defines production constraints, data flow, and deployment baseline for implementation teams.
+> Your intelligent second brain, supercharged by AI agents.
 
-## Overview
+SmartNote AI is a next-generation, cross-platform note-taking application designed to solve the problem of scattered information and ideas. By leveraging powerful AI, it enhances your ability to capture, connect, and create information intelligently.
 
-Production-grade RAG architecture built on:
-- Node.js services
-- Kafka event-driven pipeline
-- PostgreSQL + pgvector
-- Prisma ORM
-- Multi-tenant isolation
-- Transactional outbox
-- Exactly-once processing strategy
+---
 
-This repository defines the structural contract of the system.
-All implementations MUST follow this topology and data flow.
+## ✨ Core Features
 
-## Repository Contents
+-   **🤖 AI Agent Workflows:** Go beyond simple text generation. Automate multi-step tasks right from your notes—from creating reports and presentations to searching the web and managing your calendar.
+-   **✍️ Intelligent Writing Assistant:** Summarize long documents, expand on your ideas, translate languages, and fix grammar with a single click.
+-   **🎙️ Multi-Modal Notes:** Capture your thoughts in any format: rich text, voice recordings, images, sketches, or even scanned documents with OCR.
+-   **🔎 Semantic Search:** Find notes based on meaning and context, not just keywords. It understands what you're looking for.
+-   **🕸️ Mind Map View:** Automatically visualize the connections between your notes, helping you see the bigger picture.
+-   **🔄 Real-time & Offline Sync:** Your notes are always available and seamlessly synced across all your devices (iOS, Android, and Web).
 
-- `README.md` — system architecture contract and operations baseline
-- `docs/` — deep technical specifications and design references
-- `docs/ai-ux-design-system-th.md` — UX design baseline for Chat, Editor, Dashboard, Search, and Agent transparency
-- `prisma/schema.prisma` — core data model baseline
-- `sql/` — SQL scripts (pgvector + operational rollouts)
-- `k8s/` — Kubernetes manifests for autoscaling and CI/CD deployment flow
+## 🚀 Tech Stack
 
-## Quick Start (Local Reference Environment)
+Our platform is built on a modern, scalable microservices architecture.
 
-This project includes `docker-compose.yml` for standing up local infrastructure dependencies.
+-   **Frontend:** React (Web), SwiftUI (iOS), Jetpack Compose (Android)
+-   **Backend:** Go (High-Performance Services), Node.js (User Service), Python/FastAPI (AI Orchestration)
+-   **Database:** PostgreSQL with `pgvector` for embeddings, MongoDB for flexible note content, and Redis for caching and session management.
+-   **AI/ML:** MiniMax-M2.5, OpenAI API (GPT-4), Whisper (Speech-to-Text), Tesseract (OCR).
+-   **Infrastructure:** Docker, Kubernetes, GitLab CI/CD for automated deployment and scaling.
 
-```bash
-docker compose up -d
+## 🏗️ Architecture Overview
+
+We use a Microservices Architecture to ensure scalability and maintainability. Clients interact with a central API Gateway, which routes requests to the appropriate backend service.
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Client Layer  │────▶│   API Gateway    │────▶│  Microservices  │
+│ - iOS, Android  │     │ - Authentication │     │ - Note Service  │
+│ - Web App       │     │ - Routing        │     │ - AI Service    │
+└─────────────────┘     └──────────────────┘     │ - Sync Service  │
+                                                    └────────┬────────┘
+                                                             │
+                                                    ┌────────▼────────┐
+                                                    │   Data Layer    │
+                                                    │ - PostgreSQL    │
+                                                    │ - MongoDB/Redis │
+                                                    └─────────────────┘
 ```
 
-Recommended next steps:
+The core of our intelligence lies in the **AI Agent**, which is powered by a robust **Agent Memory Layer**. This allows the agent to perform complex, multi-step tasks, resume workflows, and learn from past interactions. For more details, see the [Agent Memory Layer ERD](docs/agent-memory-layer-er.md).
 
-1. Initialize PostgreSQL extensions (`pgvector`) via scripts in `sql/`.
-2. Apply Prisma migrations/schema for your service implementation.
-3. Start service workers and verify Kafka topic provisioning matches the contract below.
+## 🛠️ Getting Started (Development)
 
-> Note: Service code may be introduced incrementally, but event naming, outbox rules, and tenant isolation MUST remain compatible with this README contract.
-
-
-## UX Specification Baseline (Always Included)
-
-To keep implementation aligned with product UX expectations, every feature proposal and release checklist MUST include these UX references:
-
-- `docs/ai-ux-design-system-th.md` (design tokens, interaction rules, accessibility, AI Safety UX Standard A, and Hybrid modes: Serene/Nova)
-- `docs/smartnote-serene-dashboard-mockup.html` (dashboard UX baseline)
-- `docs/smartnote-serene-search-mockup.html` (search UX baseline)
-- `docs/editor-ui-mockup.html` (editor UX baseline)
-
-### Hybrid UX Modes (Shared DNA)
-
-SmartNote now defines 2 user-selectable UX modes under one core design system:
-
-- **Serene**: minimal + friendly visual language (light surfaces, calm cards, human-like AI tone).
-- **Nova**: tech productivity visual language (dark terminal-like feel, high-signal metrics, command-style interaction).
-
-Both modes MUST share typography, spacing grid, iconography baseline, AI safety controls, and bilingual TH/EN quality gates.
-
-## AI Safety UX Requirements (Baseline)
-
-Release candidates MUST preserve minimum UX safety controls for AI-driven flows:
-
-- Always show explicit **Risk Notice / Human Confirmation / Audit Clarity** for sensitive actions.
-- Keep **Source Transparency** visible and avoid hidden destructive automation.
-- Ensure fallback and recovery states (`Retry`, clear error copy, and non-blocking exits) exist for every AI workflow.
-
-## Thai + English UX Baseline
-
-เพื่อรองรับผู้ใช้ภาษาไทยและอังกฤษ ทีมต้องรักษาความสอดคล้องของข้อความ UX หลัก (เช่น onboarding, empty states, confirmation dialogs, search hints) ให้เป็นสองภาษาในระดับ baseline เดียวกัน โดยอย่างน้อยต้อง:
-
-- รักษาความหมายของคำเตือนด้านความปลอดภัย AI ให้ตรงกันทั้งไทยและอังกฤษ
-- ใช้โทนภาษาที่เป็นมิตรและชัดเจนเหมือนกันในทั้งสองภาษา
-- อัปเดต mockup/spec เมื่อมีการเปลี่ยนแปลง copy หรือ interaction ที่ส่งผลต่อผู้ใช้
-
-### Standardized Large-Screen UX Requirements
-
-Use proven responsive patterns so users get a consistent experience across **tablets, foldables, ChromeOS devices, and all phone sizes**:
-
-- Prefer adaptive layouts with clear breakpoints and stable information hierarchy for expanded screens.
-- Use standard navigation components (`NavigationRail`, `NavigationDrawer`, or equivalent web patterns) to keep navigation discoverable but uncluttered.
-- Keep primary content focused while secondary actions move into drawers/panels to reduce UI noise.
-- Ensure keyboard and pointer workflows remain first-class on large-screen and ChromeOS form factors.
-- Validate accessibility basics (focus order, contrast, touch target size, and responsive text scaling) for each layout mode.
-
-
-### UX Documentation Governance (Required)
-
-ทุกการเปลี่ยนแปลงด้าน workflow, dependency, หรือ UI ที่กระทบประสบการณ์ผู้ใช้ ต้องอัปเดตเอกสาร UX baseline ให้สอดคล้องกันทันที โดยเฉพาะ `docs/ai-ux-design-system-th.md`, `docs/editor-ui-mockup.html`, และ `docs/smartnote-serene-search-mockup.html`.
-
-CI ใน `.github/workflows/ci.yml` บังคับตรวจสอบ marker สำคัญของ Standard A (เช่น Design Tokens และ Human Confirmation) เพื่อให้การรีลีสยังคงมาตรฐาน UX ความปลอดภัยขั้นต่ำ.
-
-### UX Review Gate in CI
-
-CI now validates that the baseline UX documents above remain present and that this README continues to declare the UX baseline section. This acts as a minimum guardrail when workflows or architecture contracts are updated.
-
-When updating architecture, workflows, or service contracts, add a UX impact note in the related PR description and verify these docs remain current.
-
-### Bilingual Conversational UX Baseline (TH/EN)
-
-To align with the Event-Driven RAG assistant behavior, onboarding and re-engagement flows must include the following:
-
-- **Progressive Disclosure (Benefit-first):** Start with short, outcome-focused responses; reveal technical details only when requested.
-- **Contextual Awareness (2-3 day return):** If a user has been inactive for 2-3 days, summarize unfinished work before asking for next action.
-  - TH example: `ยินดีที่ได้พบกันอีกครั้งครับ เมื่อวันก่อนเราค้างเรื่องแผนการตลาด Q3 ไว้ คุณอยากดูต่อไหมครับ?`
-  - EN example: `Welcome back. Last time we paused on the Q3 marketing plan—would you like to continue from there?`
-- **Privacy Assurance (Standard A):** End onboarding with an explicit trust statement.
-  - TH required line: `ข้อมูลของคุณปลอดภัยและเป็นส่วนตัวที่สุด ผมจะเรียนรู้และเติบโตไปพร้อมกับคุณคนเดียวเท่านั้นครับ`
-  - EN equivalent: `Your data is secure and private. I learn and improve only for your experience.`
-
-These markers are enforced by CI to keep Thai/English UX and safety posture consistent across releases.
-
-
-## Google Cloud SDK Installation (for Stitch Authentication)
-
-If you use Stitch workflows that authenticate through Google Cloud, install the `gcloud` CLI first.
-
-### Standalone Install
+Follow these steps to set up your local development environment.
 
 ```bash
-# Download and install (simplified for standard environments)
-curl https://sdk.cloud.google.com | bash
-exec -l $SHELL
+# 1. Clone the repository
+git clone https://github.com/APLOPM/SmartNote-AI.git
+cd SmartNote-AI
 
-# Set local configuration to avoid prompts
-export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+# 2. Run backend services (databases, message queue, etc.)
+cd backend
+docker-compose up -d
+
+# 3. Set up the database schema
+# (Assuming you have Prisma CLI installed)
+cd ..
+npx prisma migrate dev --name init
+
+# 4. Run the web frontend
+cd frontend/web
+npm install
+npm run dev
 ```
 
-### Homebrew Install (macOS)
+## 📁 Project Structure
 
-```bash
-brew install --cask google-cloud-sdk
+The codebase is organized into the following main directories:
 
-# Set local configuration to avoid prompts
-export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+```
+/
+├── backend/          # All backend microservices (Go, Node.js, Python)
+├── frontend/         # Client applications (Web, iOS, Android)
+├── prisma/           # Prisma schema for database modeling and migrations
+├── docs/             # Technical specifications, diagrams, and documentation
+└── docker-compose.yml # Docker configuration for local development
 ```
 
+## 🎨 Design and UX
 
+Our design is guided by principles of **Clarity, Efficiency, and Control**. We aim for a consistent, bilingual (Thai/English) user experience to ensure accessibility for a diverse user base.
 
-## CI Stability for Workflow, Dependency, and UX Guardrails
+For detailed guidelines on UI components and interaction patterns, see our [AI UX Design System](docs/ai-ux-design-system-th.md).
 
-CI is configured to remain resilient when transient failures occur:
+## 🙌 Contributing
 
-- Dependency validation and workflow health checks are required baseline gates.
-- Build matrix jobs use retry logic for install/lint/test/build/prisma validation to reduce flaky failures.
-- Backoff timing is centralized in CI environment variables so reliability can be tuned without changing each command.
-- UX baseline checks remain mandatory to enforce safety markers and bilingual documentation continuity.
-- When selected checks fail due to transient infra/network causes, CI applies retry + backoff automatically before marking jobs as failed.
+We welcome contributions from the community! To contribute, please follow these steps:
 
-### CI/CD Auto-scaling Policy for Flaky Checks
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/your-feature-name`).
+3.  Make your changes and commit them with a descriptive message.
+4.  Push your changes to the branch (`git push origin feature/your-feature-name`).
+5.  Open a Pull Request, and we'll review it as soon as possible.
 
-For jobs that commonly fail due to temporary runner saturation or package registry instability, CI uses an auto-scaling style retry policy:
+## 📄 License
 
-- Retry budget is controlled by `CI_RETRY_MAX`.
-- Progressive backoff is controlled by `CI_RETRY_BACKOFF_SECONDS`.
-- Install/lint/test/prisma validate steps use standardized retry wrappers to reduce false-negative failures.
-- Failures that persist after retry budget are treated as real defects and block release.
-
-This repository treats CI stability and UX safety controls as release-blocking quality standards.
-
-### CI/CD Auto-Scaling Fallback for Unstable Checks
-
-To reduce bottlenecks when some checks fail from transient capacity or infra issues, CI/CD should support adaptive scaling policies in runner infrastructure:
-
-- Keep baseline jobs on standard GitHub-hosted runners and route burst traffic to self-hosted autoscaling pools when queue time spikes.
-- Use horizontal pod autoscaling (or runner scale sets) for build/test workers based on queue depth and average startup latency.
-- Retry only idempotent validation steps (install/lint/test) and avoid retrying deploy steps without explicit approval.
-- Record flaky-check metrics (pass-after-retry, timeout ratio, dependency registry failure rate) and tune `CI_RETRY_MAX` / `CI_RETRY_BACKOFF_SECONDS` from observed trends.
-
-These practices help keep CI predictable while preserving UX and safety gates as mandatory release criteria.
-
-## CI Prerequisites (Security & Dependency Review)
-
-To keep pull request checks stable and actionable:
-
-- Enable **Dependency graph** in repository settings: `Settings > Security > Security analysis`.
-- Keep `dependency-review` workflow enabled for PRs to detect risky dependency changes when support is available.
-- If Dependency graph is disabled, CI will skip dependency review with a notice and link to enablement instructions.
-
-## System Intent
-
-This application implements a fully event-driven Retrieval-Augmented Generation (RAG) system designed for:
-
-- Multi-tenant SaaS
-- Agent Memory Layer
-- Scalable ingestion + embedding
-- Deterministic retrieval
-- Exactly-once guarantees
-- Replayable pipeline
-
-The system separates responsibilities into isolated services:
-
-1. API Service
-2. Outbox Publisher
-3. Embedding Service
-4. Vector Indexer
-5. Retrieval Service
-6. LLM Orchestrator
-
-All communication between services is asynchronous via Kafka.
-
-## Architecture Contract (Non-Negotiable)
-
-### Event Flow
-
-1. API writes memory + outbox (single DB transaction)
-2. Outbox Publisher → memory.ingested
-3. Embedding Service → memory.embedded
-4. Indexer Service → memory.indexed
-5. Query → query.request
-6. Retrieval → query.context.ready
-7. LLM → response persisted
-
-No direct cross-service DB access allowed.
-
-## Topic Design
-
-| Topic | Purpose |
-|--------|---------|
-| memory.ingested | raw memory event |
-| memory.embedded | embedding created |
-| memory.indexed | vector stored |
-| query.request | user query |
-| query.context.ready | retrieval result |
-| memory.failed | DLQ |
-
-Keys:
-- Memory events: tenantId:memoryId
-- Query events: tenantId:userId
-
-## Guarantees
-
-- Idempotent producers
-- Manual offset commit
-- Outbox pattern
-- Tenant isolation
-- Partition locality
-- Replay-safe
-- Horizontal scaling ready
-
-## Multi-Tenant Rules
-
-- All tables contain tenant_id
-- All queries MUST filter by tenant_id
-- Kafka key MUST include tenantId
-- pgvector query MUST include tenant filter
-
-## Database Strategy
-
-- PostgreSQL primary + read replica
-- pgvector (ivfflat)
-- Partition by HASH(tenant_id)
-- PgBouncer transaction pooling
-
-## Scaling Principles
-
-Embedding bottleneck controlled via:
-- Batch processing
-- Consumer group scaling
-- Backpressure monitoring
-
-Retrieval optimized for:
-- Low latency (<50ms vector search)
-- Probe tuning
-- Indexed filtering
-
-## Failure Handling
-
-- DLQ topic for failures
-- Replay via offset reset
-- Idempotent writes
-- Circuit breaker on LLM
-
-## What MUST NOT Be Changed
-
-- Event-driven topology
-- Outbox pattern
-- Tenant partition strategy
-- Exactly-once semantics
-- Kafka key design
-- pgvector index strategy
-
-## Implementation Checklist
-
-Use this checklist before promoting any environment:
-
-- [ ] API writes domain data + outbox in a single transaction
-- [ ] Outbox publisher is idempotent and retriable
-- [ ] Consumers use manual commits and are replay-safe
-- [ ] All read/write paths include `tenant_id`
-- [ ] Kafka keys include tenant scope
-- [ ] DLQ (`memory.failed`) is configured and monitored
-- [ ] Vector queries include tenant filter and index tuning
-- [ ] Autoscaling limits are aligned with partition counts
-
-## Deployment Model
-
-- Docker-based
-- Horizontal scaling via replicas
-- Stateless services
-- Externalized configuration
-- Observability mandatory
-
-## Recommended Observability Baseline
-
-- Traces: request lifecycle across API → Kafka → workers
-- Metrics: consumer lag, per-topic throughput, retry count, DLQ rate
-- DB metrics: write latency, lock waits, vector query latency, replica lag
-- Logs: structured JSON logs with `tenantId`, `memoryId`, `queryId`, `eventType`
-
-## Documentation Map
-
-Key references for implementers:
-
-- `docs/production-rag-kafka-node-prisma-postgres.md`
-- `docs/background-queue-worker-and-kafka-rag.md`
-- `docs/agent-memory-layer-er.md`
-- `docs/smartnote-ai-technical-spec-th.md`
-- `docs/smartnote-ai-product-overview-th.md`
-- `docs/codebase-audit-fix-proposals-th.md`
-- `docs/self-hosted-runner-guide-th.md`
-
-This document defines architectural boundaries.
-All contributors must comply.
-
-## Production Autoscaling Configuration (Kafka Consumer Lag)
-
-Recommended autoscaling strategy for Kubernetes + Kafka-based RAG services:
-
-- Primary signal: Kafka consumer lag
-- Secondary protection: CPU-based scaling (for non-lag-driven services like LLM orchestrator)
-- Guardrail: `maxReplicaCount <= topic partitions`
-- Stability: cooldown + scale-down stabilization window
-
-### KEDA Installation
-
-```bash
-helm repo add kedacore https://kedacore.github.io/charts
-helm install keda kedacore/keda --namespace keda --create-namespace
-```
-
-### Included Manifests
-
-- `k8s/autoscaling/keda-kafka-autoscaling.yaml`
-  - Embedding scaler (`memory.ingested`, lagThreshold=500, maxReplicaCount=24)
-  - Retrieval scaler (`query.request`, lagThreshold=200, maxReplicaCount=48)
-- `k8s/autoscaling/deployments-resources-and-rollout.yaml`
-  - Rolling update guardrails and CPU/memory requests-limits
-- `k8s/autoscaling/hpa-llm-cpu-rps.yaml`
-  - LLM orchestrator HPA based on CPU + RPS
-- `k8s/autoscaling/alerts-prometheus-rules.yaml`
-  - Alerts for high lag, rebalance frequency, and max replica saturation
-
-### Partition Planning Rule
-
-Always ensure:
-
-- `partitions >= maxReplicaCount`
-- Example: peak ingest 20k events/min and 1 pod handles 1k events/min means at least 20 partitions and max replicas >= 20.
-
-### Operational Recommendations
-
-- Keep manual offset commits and idempotent processing.
-- Add graceful shutdown hooks so consumers commit/disconnect on SIGTERM.
-- Monitor lag, partition skew, rebalance frequency, per-message processing latency, DB write latency, and vector insert latency.
-
-## Detailed Production Blueprint
-
-For full production topology, partitioning strategy, and consumer configuration, see:
-
-### CI/CD Lock Principles
-
-- Migration runs before rollout.
-- Images are immutable (`sha` tags only in deployment flow).
-- Services are independently deployable.
-- Rollback is a single command (`kubectl rollout undo`).
-- No manual DB edits.
-- No direct production DB access.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
