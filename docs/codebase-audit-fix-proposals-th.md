@@ -1,42 +1,42 @@
 # รายงานตรวจสอบฐานโค้ด: ข้อเสนอแก้ไขอย่างละ 1 งาน
 
-เอกสารนี้สรุปปัญหาที่ตรวจพบจากโค้ดปัจจุบัน พร้อม “งานที่ควรทำ” อย่างละ 1 งานตามที่ร้องขอ: พิมพ์ผิด, บั๊ก, คอมเมนต์/เอกสารคลาดเคลื่อน, และการทดสอบ
+**เวอร์ชัน:** 1.0
+**วันที่:** 4 มีนาคม 2026
+
+---
+
+เอกสารนี้สรุปปัญหาที่ตรวจพบจากโค้ดและเอกสารปัจจุบัน พร้อม "งานที่ควรทำ" อย่างละ 1 งานตามที่ร้องขอ: พิมพ์ผิด, บั๊ก, คอมเมนต์/เอกสารคลาดเคลื่อน, และการทดสอบ
 
 ## 1) งานแก้ไขข้อความที่พิมพ์ผิด (Typo)
-- **ปัญหา:** ชื่อผู้ให้บริการ CDN เขียนเป็น `CloudFlare`
-- **หลักฐาน:** ในตารางเทคโนโลยีของสเปกภาษาไทยระบุ `CloudFlare`
-- **ตำแหน่ง:** `docs/smartnote-ai-technical-spec-th.md`
-- **งานที่เสนอ:** เปลี่ยนเป็น `Cloudflare`
-- **เกณฑ์เสร็จงาน:** ไม่พบคำว่า `CloudFlare` ในเอกสารสเปก
 
-## 2) งานแก้ไขบั๊ก (Bug Fix)
-- **ปัญหา:** `Planner.generatePlan()` สร้าง step `create_document` ด้วย input ไม่ครบ contract
-- **หลักฐาน:**
-  - `src/llm/planner.ts` ส่ง `{ format: 'docx' }`
-  - `src/llm/tool.registry.ts` กำหนด `create_document` ต้องมี `title`, `content`, `format`
-- **ผลกระทบ:** เมื่อเชื่อมกับเส้นทางที่ validate argument ตาม schema จะเกิด validation error runtime
-- **งานที่เสนอ:** ปรับ planner ให้สร้าง payload ที่ครบฟิลด์บังคับ (อย่างน้อย `title`, `content`, `format`)
-- **เกณฑ์เสร็จงาน:** step `create_document` ที่ planner คืนค่า parse ผ่าน schema ของ `toolArgumentSchemas.create_document`
+-   **ปัญหา:** ชื่อผู้ให้บริการ CDN ที่ถูกต้องคือ `Cloudflare` แต่ในเอกสารบางแห่งใช้ `CloudFlare`
+-   **ตำแหน่ง:** `docs/smartnote-ai-technical-spec-th.md`
+-   **งานที่เสนอ:** ค้นหาและแทนที่คำว่า `CloudFlare` ทั้งหมดด้วย `Cloudflare` เพื่อให้สอดคล้องกับชื่อแบรนด์ที่ถูกต้อง
+-   **เกณฑ์เสร็จงาน:** ไม่พบคำว่า `CloudFlare` ในโปรเจกต์อีกต่อไป
 
-## 3) งานแก้ไขคอมเมนต์/เอกสารคลาดเคลื่อน
-- **ปัญหา:** Prisma model ระบุ `Memory.embedding` เป็น `Bytes?` พร้อมคอมเมนต์ว่า vector จริงมาจาก SQL migration ขณะที่ migration กำหนดเป็น `vector(1536)` โดยตรง
-- **หลักฐาน:**
-  - `prisma/schema.prisma` ใช้ `embedding Bytes?`
-  - `sql/pgvector_setup.sql` บังคับชนิดคอลัมน์เป็น `vector(1536)`
-- **งานที่เสนอ:** เพิ่มคำอธิบายใน schema/doc ให้ชัดเจนว่าทำไม Prisma กับ DB type จึงต่างกัน และแนวทางใช้งานที่ถูกต้อง
-- **เกณฑ์เสร็จงาน:** มีข้อความอธิบายที่ชัดเจนในจุดเดียวที่ทีมใช้เป็นแหล่งอ้างอิงหลัก (single source of truth)
+## 2) งานแก้ไขข้อบกพร่อง (Bug)
 
-## 4) งานปรับปรุงการทดสอบ
-- **ช่องว่าง:** ยังไม่มี automated test ที่ตรวจความสอดคล้องระหว่าง output ของ planner กับ tool schemas
-- **งานที่เสนอ:** เพิ่ม contract test ของ planner 1 ชุด
-- **ขอบเขตทดสอบขั้นต่ำ:**
-  1. ทุก step ที่ planner สร้างต้องเป็น tool ที่รองรับจริง
-  2. input ของแต่ละ step ต้อง parse ผ่าน schema ของ tool นั้น
-  3. เคส `create_document` ต้องมี `title`, `content`, `format`
-- **เกณฑ์เสร็จงาน:** test fail เมื่อ planner คืน payload ไม่ตรง schema และ pass เมื่อแก้ครบ
+-   **ปัญหา:** ในเอกสาร UI/UX (`ui-ux-main-editor-spec-th.md`) ได้ระบุ Slash Command สำหรับแก้ไวยากรณ์เป็น `/fix grammar` ซึ่งมีช่องว่าง (space) อยู่ด้วย โดยทั่วไปแล้ว command parser จะถือว่าช่องว่างเป็นการสิ้นสุดคำสั่ง ทำให้คำสั่งนี้ไม่สามารถทำงานได้ตามที่ตั้งใจ
+-   **ตำแหน่ง:** `docs/ui-ux-main-editor-spec-th.md`, line 70.
+-   **งานที่เสนอ:** แก้ไขชื่อ Command จาก `/fix grammar` เป็น `/fix-grammar` หรือ `/fixgrammar` เพื่อให้เป็นไปตามมาตรฐานการออกแบบ command-line interface และง่ายต่อการประมวลผล
+-   **เกณฑ์เสร็จงาน:** เอกสาร UI/UX และการ implement ที่เกี่ยวข้องทั้งหมดใช้ชื่อ command ที่ไม่มีช่องว่าง
 
-## หมายเหตุการจัดลำดับความสำคัญ
-1. **บั๊ก planner/schema mismatch** (กระทบ runtime โดยตรง)
-2. **เพิ่ม contract test** (ป้องกัน regression)
-3. **เอกสาร/คอมเมนต์คลาดเคลื่อน** (ลดความสับสนระยะยาว)
-4. **typo** (ความถูกต้องเชิงเอกสาร)
+## 3) งานแก้ไขความคลาดเคลื่อนของเอกสาร (Documentation Mismatch)
+
+-   **ปัญหา:** ใน `prisma/schema.prisma` มีคอมเมนต์เหนือ `ShortTermMemory` ว่า `// SHORT TERM MEMORY (Redis mirror + DB fallback)` ซึ่งบ่งชี้ว่า Redis คือที่จัดเก็บหลัก แต่ตัว Schema กลับนิยาม `ShortTermMemory` เป็นตารางใน PostgreSQL และมีความสัมพันธ์ (relation) โดยตรงกับ `AgentSession` ทำให้เกิดความสับสนว่าแหล่งข้อมูลที่แท้จริง (source of truth) คือที่ไหน และมีการซิงค์ข้อมูลระหว่างกันอย่างไร
+-   **ตำแหน่ง:** `prisma/schema.prisma`
+-   **งานที่เสนอ:** ปรับปรุงคอมเมนต์ใน `prisma/schema.prisma` ให้ชัดเจนยิ่งขึ้น เช่น `// This table serves as a persistent log or fallback for short-term memories, which are primarily managed in Redis.` และควรเพิ่มเอกสารอธิบายสถาปัตยกรรมการซิงค์ข้อมูลระหว่าง Redis และ PostgreSQL
+-   **เกณฑ์เสร็จงาน:** คอมเมนต์ในโค้ดและเอกสารที่เกี่ยวข้องมีความชัดเจนและสอดคล้องกันเกี่ยวกับบทบาทของ PostgreSQL และ Redis สำหรับ Short-Term Memory
+
+## 4) งานปรับปรุงการทดสอบ (Testing Improvement)
+
+-   **ปัญหา:** ปัจจุบันยังไม่มีการทดสอบที่ครอบคลุมหนึ่งในฟีเจอร์ที่สำคัญที่สุดของ Agent Memory Layer นั่นคือความสามารถในการกู้คืน (resume) Task ที่ทำงานผิดพลาดหรือล้มเหลวระหว่างทาง
+-   **ตำแหน่ง:** (ยังไม่มีไฟล์ทดสอบนี้)
+-   **งานที่เสนอ:** สร้าง Integration Test ใหม่ชื่อ `test_resume_failed_multistep_task` โดยมีขั้นตอนดังนี้:
+    1.  **Setup:** สร้าง Task ที่มีหลายขั้นตอน (เช่น 5 steps) และจำลองให้ `ToolExecution` ของ Step ที่ 3 ทำงานล้มเหลว ซึ่งจะทำให้สถานะของ `AgentTask` เปลี่ยนเป็น `FAILED`
+    2.  **Action:** เรียกใช้ฟังก์ชัน `resume` สำหรับ Task ที่ล้มเหลวนี้
+    3.  **Assert:** ตรวจสอบว่า:
+        -   สถานะของ `AgentTask` เปลี่ยนจาก `FAILED` เป็น `RUNNING`
+        -   ระบบเริ่มทำงานต่อจาก `currentStepIndex` ที่ถูกต้อง (คือ step ที่ 3)
+        -   มีการสร้าง `ToolExecution` ใหม่สำหรับ Step ที่ 3
+-   **เกณฑ์เสร็จงาน:** มี Test Case ที่สามารถยืนยันได้ว่าระบบสามารถกู้คืน Task ที่ล้มเหลวได้อย่างถูกต้อง

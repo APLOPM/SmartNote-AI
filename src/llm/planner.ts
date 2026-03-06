@@ -1,14 +1,8 @@
-export type PlannedStep = {
-  action: string
-  input: Record<string, unknown>
-}
-
-export type PlanResult = {
-  steps: PlannedStep[]
-}
-
+// llm/planner.ts
 export class Planner {
-  async generatePlan(goal: string): Promise<PlanResult> {
+
+  async generatePlan(goal: string) {
+    // Replace with real LLM call
     return {
       steps: [
         {
