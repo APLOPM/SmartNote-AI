@@ -7,19 +7,19 @@ export class AgentService {
   private taskService = new TaskService()
   private planner = new Planner()
 
-  async runAgent(tenantId: string, sessionId: string, goal: string) {
-    const task = await this.taskService.createTask(tenantId, sessionId, goal)
+  async runAgent(sessionId: string, goal: string) {
+    const task = await this.taskService.createTask(sessionId, goal)
 
     try {
       const plan = await this.planner.generatePlan(goal)
 
-      await this.taskService.initializeSteps(tenantId, task.id, plan.steps)
-      await this.taskService.executeTask(tenantId, task.id, `run:${task.id}`)
+      await this.taskService.initializeSteps(task.id, plan.steps)
+      await this.taskService.executeTask(task.id)
 
       return { taskId: task.id }
     } catch (error) {
       await prisma.agentTask.updateMany({
-        where: { id: task.id, tenantId },
+        where: { id: task.id },
         data: {
           status: TaskStatus.FAILED,
           completedAt: new Date()
@@ -30,17 +30,7 @@ export class AgentService {
     }
   }
 
-  async resumeTask(tenantId: string, taskId: string, resumeKey?: string) {
-    const snapshot = await this.taskService.recoverSnapshot(tenantId, taskId)
-    const execution = await this.taskService.executeTask(
-      tenantId,
-      taskId,
-      resumeKey ?? `resume:${taskId}`
-    )
-
-    return {
-      ...execution,
-      snapshot
-    }
+  async resumeTask(taskId: string) {
+    return this.taskService.executeTask(taskId)
   }
 }

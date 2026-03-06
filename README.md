@@ -89,6 +89,25 @@ Our design is guided by principles of **Clarity, Efficiency, and Control**. We a
 
 For detailed guidelines on UI components and interaction patterns, see our [AI UX Design System](docs/ai-ux-design-system-th.md).
 
+### UX Specification Baseline (Always Included)
+
+To keep product quality stable across releases, every UX proposal and PR should preserve these baseline requirements.
+
+- **Bilingual Conversational UX Baseline (TH/EN):**
+  - TH: ใช้ภาษาไทยที่เป็นธรรมชาติ สุภาพ และตรงประเด็น พร้อมหลีกเลี่ยงศัพท์เทคนิคที่ไม่จำเป็น
+  - EN: Use clear, concise English with consistent intent and terminology across screens.
+- **Progressive Disclosure (Benefit-first):** แสดงคุณค่าที่ผู้ใช้ได้รับก่อน แล้วค่อยเปิดรายละเอียดเชิงเทคนิคตามบริบท.
+- **Contextual Awareness (2-3 day return):** UX ต้องช่วยให้ผู้ใช้ที่กลับมาใช้งานหลัง 2-3 วันเข้าใจสถานะล่าสุดได้ภายในไม่กี่วินาที.
+- **Privacy Assurance (Standard A):** งานที่มีความเสี่ยงด้านข้อมูลต้องมีการยืนยันจากผู้ใช้ (Human Confirmation) และคำอธิบายการใช้ข้อมูล.
+- **AI Safety UX Standard A:** บังคับใช้ marker ความปลอดภัยในงาน UX/AI ที่เกี่ยวข้องกับการกระทำสำคัญต่อข้อมูลผู้ใช้.
+
+Reference set:
+- [AI UX Design System](docs/ai-ux-design-system-th.md)
+- [Serene Dashboard Mockup](docs/smartnote-serene-dashboard-mockup.html)
+- [Serene Search Mockup](docs/smartnote-serene-search-mockup.html)
+- [Editor UI Mockup](docs/editor-ui-mockup.html)
+
+
 ## 🙌 Contributing
 
 We welcome contributions from the community! To contribute, please follow these steps:

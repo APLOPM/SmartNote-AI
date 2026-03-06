@@ -36,7 +36,7 @@ export class TaskService {
     if (!task) throw new Error('Task not found')
 
     // Guard clause to prevent re-running a finished task
-    if (task.status === 'COMPLETED' || task.status === 'CANCELLED') {
+    if (task.status === 'COMPLETED' || task.status === 'PAUSED') {
       console.log(`Task ${taskId} is already finished. Skipping execution.`)
       return { success: true, status: task.status }
     }
