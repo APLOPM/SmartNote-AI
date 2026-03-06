@@ -1,20 +1,20 @@
-import { MemorySourceType } from '@prisma/client'
+import { SourceType } from '@prisma/client'
 import { prisma } from '../prisma'
 
 export class MemoryService {
-  async linkMemory(tenantId: string, taskId: string, memoryId: string) {
+  async linkMemory(taskId: string, memoryId: string) {
     return prisma.$transaction(async (tx) => {
       const [task, memory] = await Promise.all([
-        tx.agentTask.findFirst({ where: { id: taskId, tenantId }, select: { id: true } }),
-        tx.longTermMemory.findFirst({ where: { id: memoryId, tenantId }, select: { id: true } })
+        tx.agentTask.findUnique({ where: { id: taskId }, select: { id: true } }),
+        tx.longTermMemory.findUnique({ where: { id: memoryId }, select: { id: true } })
       ])
 
       if (!task) {
-        throw new Error('Task not found for tenant')
+        throw new Error('Task not found')
       }
 
       if (!memory) {
-        throw new Error('Memory not found for tenant')
+        throw new Error('Memory not found')
       }
 
       return tx.longTermMemoryLink.upsert({
@@ -26,7 +26,6 @@ export class MemoryService {
         },
         update: {},
         create: {
-          tenantId,
           taskId,
           memoryId
         }
@@ -35,16 +34,14 @@ export class MemoryService {
   }
 
   async storeLongTermMemory(
-    tenantId: string,
     userId: string,
-    sourceType: MemorySourceType,
+    sourceType: SourceType,
     sourceId: string,
     embeddingId: string,
     summary: string
   ) {
     return prisma.longTermMemory.create({
       data: {
-        tenantId,
         userId,
         sourceType,
         sourceId,
@@ -54,11 +51,11 @@ export class MemoryService {
     })
   }
 
-  async getTaskMemories(tenantId: string, taskId: string) {
+  async getTaskMemories(taskId: string) {
     return prisma.longTermMemoryLink.findMany({
-      where: { tenantId, taskId },
+      where: { taskId },
       include: { memory: true },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { memory: { createdAt: 'desc' } }
     })
   }
 }

@@ -91,15 +91,12 @@ jobs:
     name: สร้าง-ทดสอบ (${{ matrix.service }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: ${{ github.event_name == 'pull_request' && 3 || 1 }}
       matrix:
         include:
           - service: api
-            service_label: API
-            path: .
 
     defaults:
       run:
@@ -131,15 +128,12 @@ jobs:
           fi
 
           echo "service_dir=$service_dir" >> "$GITHUB_OUTPUT"
-
           if [ -f "$lockfile" ]; then
             echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
             echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No package-lock.json for ${{ matrix.service }}. Falling back to npm install."
           fi
-
           echo "should_run=true" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node (with npm cache)
@@ -172,28 +166,7 @@ jobs:
 
           cd "${{ steps.detect.outputs.service_dir }}"
           if [ "${{ steps.detect.outputs.has_lockfile }}" = "true" ]; then
-            retry "$CI_RETRY_MAX" npm ci
-          else
-            retry "$CI_RETRY_MAX" npm install
-          fi
-
-          retry() {
-            local max_attempts="$1"
-            shift
-            local attempt=1
-            until "$@"; do
-              if [ "$attempt" -ge "$max_attempts" ]; then
-                echo "::error::Command failed after ${attempt} attempts: $*"
-                return 1
-              fi
-              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
-              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
-              attempt=$((attempt + 1))
-            done
-          }
-
-          if [ "${{ steps.detect.outputs.has_lockfile }}" = "true" ]; then
-            retry "$CI_RETRY_MAX" npm ci
+            retry "$CI_RETRY_MAX" npm ci --no-audit --no-fund
           else
             retry "$CI_RETRY_MAX" npm install --no-audit --no-fund
           fi
@@ -202,55 +175,20 @@ jobs:
         if: steps.detect.outputs.should_run == 'true'
         run: |
           set -euo pipefail
-
-          retry() {
-            local max_attempts="$1"
-            shift
-            local attempt=1
-            until "$@"; do
-              if [ "$attempt" -ge "$max_attempts" ]; then
-                echo "::error::Command failed after ${attempt} attempts: $*"
-                return 1
-              fi
-              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
-              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
-              attempt=$((attempt + 1))
-            done
-          }
-
           cd "${{ steps.detect.outputs.service_dir }}"
-          retry "$CI_RETRY_MAX" npm run lint --if-present
+          npm run lint --if-present
 
       - name: Test (retry)
         if: steps.detect.outputs.should_run == 'true'
         run: |
           set -euo pipefail
-
-          retry() {
-            local max_attempts="$1"
-            shift
-            local attempt=1
-            until "$@"; do
-              if [ "$attempt" -ge "$max_attempts" ]; then
-                echo "::error::Command failed after ${attempt} attempts: $*"
-                return 1
-              fi
-              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
-              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
-              attempt=$((attempt + 1))
-            done
-          }
-
           cd "${{ steps.detect.outputs.service_dir }}"
-          retry "$CI_RETRY_MAX" npm run test --if-present
+          npm run test --if-present
 
-          retry "$CI_RETRY_MAX" npm run test --if-present
-
-      - name: Prisma Validate (retry)
+      - name: Prisma Validate
         if: steps.detect.outputs.should_run == 'true'
         run: |
           set -euo pipefail
-
           schema_path="${{ steps.detect.outputs.service_dir }}/prisma/schema.prisma"
           if [ -f "$schema_path" ]; then
             npx prisma validate --schema="$schema_path"
@@ -259,3 +197,17 @@ jobs:
           else
             echo "::notice::Skip Prisma validate: prisma/schema.prisma not found."
           fi
+
+  ci-elastic-fallback-checks:
+    name: CI elastic fallback checks (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate autoscaling manifests for CI/CD readiness
+        run: |
+          set -euo pipefail
+          test -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
+          test -f k8s/autoscaling/keda-kafka-autoscaling.yaml
+          test -f k8s/autoscaling/alerts-prometheus-rules.yaml
