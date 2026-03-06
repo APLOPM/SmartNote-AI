@@ -33,6 +33,8 @@ jobs:
           test -f .github/workflows/ci.yml
           test -f .github/workflows/dependency-review.yml
           test -f .github/workflows/deploy.yml
+          test -f .github/workflows/build.yml
+          test -f .github/workflows/webpack.yml
 
   docs-mockups:
     name: ตรวจสอบหน้า mockup
@@ -61,6 +63,9 @@ jobs:
           rg -q "Progressive Disclosure \(Benefit-first\)" README.md
           rg -q "Contextual Awareness \(2-3 day return\)" README.md
           rg -q "Privacy Assurance \(Standard A\)" README.md
+          rg -q "AI Safety UX Standard A" README.md
+          rg -q "TH: ใช้ภาษาไทยที่เป็นธรรมชาติ" README.md
+          rg -q "EN: Use clear, concise English" README.md
 
       - name: Enforce UX Safety Standard A markers
         run: |
@@ -85,6 +90,7 @@ jobs:
           set -euo pipefail
           test -f .github/workflows/dependency-review.yml
           rg -q "uses: actions/dependency-review-action@v4" .github/workflows/dependency-review.yml
+          rg -q "fail-on-severity: moderate" .github/workflows/dependency-review.yml
           rg -q "pull_request:" .github/workflows/dependency-review.yml
 
   build-test:
@@ -211,3 +217,4 @@ jobs:
           test -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
           test -f k8s/autoscaling/keda-kafka-autoscaling.yaml
           test -f k8s/autoscaling/alerts-prometheus-rules.yaml
+          rg -q "autoscaling" README.md

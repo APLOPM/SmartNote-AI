@@ -5,9 +5,13 @@ on:
     - cron: '43 10 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   stale:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       issues: write
       pull-requests: write
@@ -16,7 +20,7 @@ jobs:
       - uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-issue-message: 'Stale issue message'
-          stale-pr-message: 'Stale pull request message'
+          stale-issue-message: 'This issue has been automatically marked stale due to inactivity. / ประเด็นนี้ถูกทำเครื่องหมายว่า stale อัตโนมัติเนื่องจากไม่มีกิจกรรม'
+          stale-pr-message: 'This pull request has been automatically marked stale due to inactivity. / PR นี้ถูกทำเครื่องหมายว่า stale อัตโนมัติเนื่องจากไม่มีกิจกรรม'
           stale-issue-label: 'no-issue-activity'
           stale-pr-label: 'no-pr-activity'

@@ -5,9 +5,13 @@ on:
     types: [opened]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   summary:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       issues: write
       models: read
@@ -28,6 +32,7 @@ jobs:
             Body: ${{ github.event.issue.body }}
 
       - name: Comment with AI summary
+        if: ${{ steps.inference.outputs.response != '' }}
         run: gh issue comment "$ISSUE_NUMBER" --body "$RESPONSE"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -6,6 +6,11 @@ on:
     types:
       - completed
   workflow_dispatch:
+    inputs:
+      deploy_sha:
+        description: "Commit SHA to deploy (optional for manual runs)"
+        required: false
+        type: string
 
 concurrency:
   group: production-deploy
@@ -14,37 +19,33 @@ concurrency:
 permissions:
   contents: read
 
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
-
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
-      IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
-
-    env:
-      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_SHA: ${{ inputs.deploy_sha || github.event.workflow_run.head_sha || github.sha }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Normalize image prefix
         run: |
-          echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.event.workflow_run.repository.full_name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+          echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
 
       - name: Configure kubeconfig
         run: |
+          set -euo pipefail
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
 
       - name: Run migration job (before rollout)
         run: |
+          set -euo pipefail
           kubectl delete job prisma-migrate --ignore-not-found=true
           API_IMAGE="$IMAGE_PREFIX/api:$DEPLOY_SHA"
           sed "s|__API_IMAGE__|$API_IMAGE|g" k8s/cicd/prisma-migrate-job.yaml | kubectl apply -f -
@@ -52,6 +53,7 @@ jobs:
 
       - name: Set image tags (immutable SHA only)
         run: |
+          set -euo pipefail
           for svc in api embedding retrieval llm outbox; do
             kubectl set image deployment/$svc \
               $svc=$IMAGE_PREFIX/$svc:$DEPLOY_SHA
@@ -59,12 +61,15 @@ jobs:
 
       - name: Apply autoscaling baseline
         run: |
+          set -euo pipefail
           kubectl apply -f k8s/autoscaling/deployments-resources-and-rollout.yaml
           kubectl apply -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
           kubectl apply -f k8s/autoscaling/keda-kafka-autoscaling.yaml
+          kubectl apply -f k8s/autoscaling/alerts-prometheus-rules.yaml
 
       - name: Wait rollout
         run: |
+          set -euo pipefail
           retry() {
             local max_attempts="$1"
             shift
@@ -86,6 +91,7 @@ jobs:
 
       - name: Smoke test (API + DB + Kafka)
         run: |
+          set -euo pipefail
           kubectl run smoke-test \
             --image=$IMAGE_PREFIX/api:$DEPLOY_SHA \
             --restart=Never \

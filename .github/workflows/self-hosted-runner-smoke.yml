@@ -7,6 +7,7 @@ jobs:
   verify-runner:
     name: Verify self-hosted runner availability
     runs-on: [self-hosted, windows, x64, smartnote]
+    timeout-minutes: 10
     steps:
       - name: Print runner info
         shell: pwsh

@@ -13,6 +13,7 @@ permissions:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +21,7 @@ jobs:
       - name: Detect Conda project files
         id: detect
         run: |
+          set -euo pipefail
           if [ -f environment.yml ]; then
             echo "has_environment=true" >> "$GITHUB_OUTPUT"
           else
@@ -49,4 +51,4 @@ jobs:
         shell: bash -el {0}
         run: |
           conda install -y pytest
-          pytest
+          pytest -q

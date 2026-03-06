@@ -108,6 +108,18 @@ Reference set:
 - [Editor UI Mockup](docs/editor-ui-mockup.html)
 
 
+
+### CI Stability & UX Safety Enforcement
+
+To keep CI/CD resilient and UX-safe by default, this repository enforces the following:
+
+- **Workflow Reliability:** retry/backoff strategy for dependency installation and rollout checks to reduce flaky failures.
+- **Dependency Guardrails:** pull requests are evaluated by Dependency Review with moderate-or-higher severity gating.
+- **Autoscaling Readiness for Recovery:** Kubernetes autoscaling manifests are continuously validated (HPA, KEDA, and Prometheus alert rules) so the platform can scale and recover when certain CI/CD checks or workloads become unstable.
+- **UX Safety Standard A (TH/EN):**
+  - TH: ทุกฟีเจอร์ที่เกี่ยวข้องกับข้อมูลสำคัญต้องมี Human Confirmation และคำอธิบายการใช้ข้อมูลที่เข้าใจง่าย
+  - EN: Any feature that can impact sensitive user data must include Human Confirmation and clear data-use disclosure.
+
 ## 🙌 Contributing
 
 We welcome contributions from the community! To contribute, please follow these steps:
