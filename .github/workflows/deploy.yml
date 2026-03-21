@@ -30,6 +30,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate deploy prerequisites
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KUBE_CONFIG_B64}" ]; then
+            echo "::error::Missing secret KUBE_CONFIG"
+            exit 1
+          fi
+          test -f k8s/cicd/prisma-migrate-job.yaml
+          test -f k8s/autoscaling/deployments-resources-and-rollout.yaml
+
       - name: Normalize image prefix
         run: |
           echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
@@ -55,8 +67,12 @@ jobs:
         run: |
           set -euo pipefail
           for svc in api embedding retrieval llm outbox; do
-            kubectl set image deployment/$svc \
-              $svc=$IMAGE_PREFIX/$svc:$DEPLOY_SHA
+            if kubectl get deployment "$svc" >/dev/null 2>&1; then
+              kubectl set image deployment/$svc \
+                $svc=$IMAGE_PREFIX/$svc:$DEPLOY_SHA
+            else
+              echo "::notice::Skip image update for deployment/$svc because it does not exist in the target cluster."
+            fi
           done
 
       - name: Apply autoscaling baseline
@@ -86,17 +102,24 @@ jobs:
           }
 
           for svc in api embedding retrieval llm outbox; do
-            retry 3 kubectl rollout status deployment/$svc --timeout=300s
+            if kubectl get deployment "$svc" >/dev/null 2>&1; then
+              retry 3 kubectl rollout status deployment/$svc --timeout=300s
+            fi
           done
 
       - name: Smoke test (API + DB + Kafka)
         run: |
           set -euo pipefail
+          kubectl delete pod smoke-test --ignore-not-found=true
           kubectl run smoke-test \
             --image=$IMAGE_PREFIX/api:$DEPLOY_SHA \
             --restart=Never \
-            --rm -i \
             --command -- npm run smoke:test
+          kubectl wait --for=condition=Ready --timeout=180s pod/smoke-test || true
+          kubectl wait --for=condition=ContainersReady --timeout=180s pod/smoke-test || true
+          kubectl wait --for=condition=Succeeded --timeout=600s pod/smoke-test
+          kubectl logs smoke-test
+          kubectl delete pod smoke-test --ignore-not-found=true
 
       - name: Rollback on failure
         if: ${{ failure() }}

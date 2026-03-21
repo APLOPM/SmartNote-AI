@@ -27,6 +27,29 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Validate required secret and JSON payload
+        env:
+          REGULAR_API_KEY: ${{ secrets.ALGORITHMIA_REGULAR_API_KEY }}
+          CASES: ${{ inputs.cases }}
+        run: |
+          set -euo pipefail
+          if [ -z "${REGULAR_API_KEY}" ]; then
+            echo "::error::Missing secret ALGORITHMIA_REGULAR_API_KEY"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import os
+
+          try:
+              payload = json.loads(os.environ["CASES"])
+          except Exception as exc:
+              raise SystemExit(f"Invalid JSON in workflow input 'cases': {exc}")
+
+          if not isinstance(payload, list) or not payload:
+              raise SystemExit("The 'cases' input must be a non-empty JSON array.")
+          PY
+
       - name: Algorithmia test-algo
         uses: algorithmiaio/test-algo-action@v0.1.1-rc6
         with:

@@ -2,133 +2,167 @@
 
 > Your intelligent second brain, supercharged by AI agents.
 
-SmartNote AI is a next-generation, cross-platform note-taking application designed to solve the problem of scattered information and ideas. By leveraging powerful AI, it enhances your ability to capture, connect, and create information intelligently.
+SmartNote AI is a bilingual (Thai/English) product concept for AI-assisted note capture, retrieval, and workflow orchestration. The current repository primarily contains architecture notes, UX specifications, mockups, Kubernetes deployment assets, and GitHub Actions workflows that keep documentation and CI/CD policy aligned.
 
 ---
 
 ## ✨ Core Features
 
--   **🤖 AI Agent Workflows:** Go beyond simple text generation. Automate multi-step tasks right from your notes—from creating reports and presentations to searching the web and managing your calendar.
--   **✍️ Intelligent Writing Assistant:** Summarize long documents, expand on your ideas, translate languages, and fix grammar with a single click.
--   **🎙️ Multi-Modal Notes:** Capture your thoughts in any format: rich text, voice recordings, images, sketches, or even scanned documents with OCR.
--   **🔎 Semantic Search:** Find notes based on meaning and context, not just keywords. It understands what you're looking for.
--   **🕸️ Mind Map View:** Automatically visualize the connections between your notes, helping you see the bigger picture.
--   **🔄 Real-time & Offline Sync:** Your notes are always available and seamlessly synced across all your devices (iOS, Android, and Web).
+- **🤖 AI Agent Workflows:** Coordinate multi-step tasks such as summarization, retrieval, drafting, and workflow hand-offs from a note-centric UI.
+- **✍️ Intelligent Writing Assistant:** Improve, translate, summarize, and expand note content with inline AI assistance.
+- **🎙️ Multi-Modal Notes:** Support text, voice, image, OCR, and structured AI output blocks in a single workspace.
+- **🔎 Semantic Search:** Retrieve notes by intent and meaning, not only literal keywords.
+- **🕸️ Knowledge Mapping:** Visualize relationships between notes, tasks, and AI-generated insights.
+- **🔄 Sync & Reliability Controls:** Design for cross-platform sync, offline resilience, and operational guardrails in CI/CD.
 
-## 🚀 Tech Stack
+## 🚀 Repository Focus
 
-Our platform is built on a modern, scalable microservices architecture.
+This repository is currently organized around product and platform foundations rather than a fully checked-in application runtime.
 
--   **Frontend:** React (Web), SwiftUI (iOS), Jetpack Compose (Android)
--   **Backend:** Go (High-Performance Services), Node.js (User Service), Python/FastAPI (AI Orchestration)
--   **Database:** PostgreSQL with `pgvector` for embeddings, MongoDB for flexible note content, and Redis for caching and session management.
--   **AI/ML:** MiniMax-M2.5, OpenAI API (GPT-4), Whisper (Speech-to-Text), Tesseract (OCR).
--   **Infrastructure:** Docker, Kubernetes, GitLab CI/CD for automated deployment and scaling.
+- **Product documentation:** bilingual UX/design system notes, architecture specifications, and audit proposals.
+- **Experience mockups:** HTML mockups that define dashboard, search, and editor flows.
+- **Platform operations:** Kubernetes manifests for autoscaling, rollout, and migration jobs.
+- **CI/CD governance:** GitHub Actions workflows that validate docs, dependency policy, deployment readiness, and operational smoke checks.
 
-## 🏗️ Architecture Overview
+## 🧱 System Structure by Layer
 
-We use a Microservices Architecture to ensure scalability and maintainability. Clients interact with a central API Gateway, which routes requests to the appropriate backend service.
+### 1) Experience Layer
 
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Client Layer  │────▶│   API Gateway    │────▶│  Microservices  │
-│ - iOS, Android  │     │ - Authentication │     │ - Note Service  │
-│ - Web App       │     │ - Routing        │     │ - AI Service    │
-└─────────────────┘     └──────────────────┘     │ - Sync Service  │
-                                                    └────────┬────────┘
-                                                             │
-                                                    ┌────────▼────────┐
-                                                    │   Data Layer    │
-                                                    │ - PostgreSQL    │
-                                                    │ - MongoDB/Redis │
-                                                    └─────────────────┘
-```
+User-facing surfaces are designed for web, mobile, and AI-assisted editing experiences.
 
-The core of our intelligence lies in the **AI Agent**, which is powered by a robust **Agent Memory Layer**. This allows the agent to perform complex, multi-step tasks, resume workflows, and learn from past interactions. For more details, see the [Agent Memory Layer ERD](docs/agent-memory-layer-er.md).
+- **Dashboard / workspace surfaces:** defined by the serene dashboard mockup for overview and return-user orientation.
+- **Search surface:** optimized for semantic lookup and recovery of prior context.
+- **Editor surface:** supports inline AI actions, generated content blocks, and review/accept flows.
+- **Bilingual UX baseline:** Thai and English copy must remain consistent in intent, privacy messaging, and task confirmation behavior.
 
-## 🛠️ Getting Started (Development)
+### 2) Intelligence Layer
 
-Follow these steps to set up your local development environment.
+The AI layer is responsible for orchestration rather than single-shot generation only.
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/APLOPM/SmartNote-AI.git
-cd SmartNote-AI
+- **Agent memory:** persistent context and workflow state are described in the Agent Memory Layer ERD.
+- **AI patterns:** command palette, slash commands, AI cards, and streaming feedback are documented in the design system.
+- **Safety model:** sensitive operations require Human Confirmation and explicit data-use disclosure.
 
-# 2. Run backend services (databases, message queue, etc.)
-cd backend
-docker-compose up -d
+### 3) Platform & Delivery Layer
 
-# 3. Set up the database schema
-# (Assuming you have Prisma CLI installed)
-cd ..
-npx prisma migrate dev --name init
+Operational assets support reliability, scaling, and deployment governance.
 
-# 4. Run the web frontend
-cd frontend/web
-npm install
-npm run dev
-```
+- **Kubernetes manifests:** autoscaling, rollout, and migration jobs are stored in `k8s/`.
+- **GitHub Actions workflows:** repository automation validates workflow health, dependency review, deployment readiness, and optional stacks such as Android, Next.js, Conda, and Webpack.
+- **Documentation-driven quality:** CI verifies that README and UX docs stay synchronized.
 
-## 📁 Project Structure
+## 🗂️ Repository Structure
 
-The codebase is organized into the following main directories:
-
-```
-/
-├── backend/          # All backend microservices (Go, Node.js, Python)
-├── frontend/         # Client applications (Web, iOS, Android)
-├── prisma/           # Prisma schema for database modeling and migrations
-├── docs/             # Technical specifications, diagrams, and documentation
-└── docker-compose.yml # Docker configuration for local development
+```text
+.
+├── .github/
+│   ├── labeler.yml
+│   └── workflows/                  # CI/CD, deployment, labeling, stale handling, AI summaries
+├── docs/
+│   ├── ai-ux-design-system-th.md   # UX principles, AI interaction patterns, safety markers
+│   ├── agent-memory-layer-er.md    # Agent memory/data relationship overview
+│   ├── smartnote-serene-*.html     # Dashboard and search mockups
+│   └── editor-ui-mockup.html       # Editor UX reference
+├── k8s/
+│   ├── autoscaling/                # HPA, KEDA, rollout resources, Prometheus rules
+│   └── cicd/                       # Deployment and Prisma migration job assets
+└── README.md
 ```
 
-## 🎨 Design and UX
+## 🧭 Key Documentation Map
 
-Our design is guided by principles of **Clarity, Efficiency, and Control**. We aim for a consistent, bilingual (Thai/English) user experience to ensure accessibility for a diverse user base.
+- [AI UX Design System](docs/ai-ux-design-system-th.md)
+- [Agent Memory Layer ERD](docs/agent-memory-layer-er.md)
+- [Technical Specification (TH)](docs/smartnote-ai-technical-spec-th.md)
+- [Product Overview (TH)](docs/smartnote-ai-product-overview-th.md)
+- [Dashboard Mockup](docs/smartnote-serene-dashboard-mockup.html)
+- [Search Mockup](docs/smartnote-serene-search-mockup.html)
+- [Editor Mockup](docs/editor-ui-mockup.html)
+- [Codebase Audit & Fix Proposals (TH)](docs/codebase-audit-fix-proposals-th.md)
 
-For detailed guidelines on UI components and interaction patterns, see our [AI UX Design System](docs/ai-ux-design-system-th.md).
+## 🎨 UX Specification Baseline (Always Included)
 
-### UX Specification Baseline (Always Included)
-
-To keep product quality stable across releases, every UX proposal and PR should preserve these baseline requirements.
+To keep product quality stable across releases, every UX proposal, implementation plan, and PR should preserve these baseline requirements.
 
 - **Bilingual Conversational UX Baseline (TH/EN):**
-  - TH: ใช้ภาษาไทยที่เป็นธรรมชาติ สุภาพ และตรงประเด็น พร้อมหลีกเลี่ยงศัพท์เทคนิคที่ไม่จำเป็น
-  - EN: Use clear, concise English with consistent intent and terminology across screens.
-- **Progressive Disclosure (Benefit-first):** แสดงคุณค่าที่ผู้ใช้ได้รับก่อน แล้วค่อยเปิดรายละเอียดเชิงเทคนิคตามบริบท.
-- **Contextual Awareness (2-3 day return):** UX ต้องช่วยให้ผู้ใช้ที่กลับมาใช้งานหลัง 2-3 วันเข้าใจสถานะล่าสุดได้ภายในไม่กี่วินาที.
-- **Privacy Assurance (Standard A):** งานที่มีความเสี่ยงด้านข้อมูลต้องมีการยืนยันจากผู้ใช้ (Human Confirmation) และคำอธิบายการใช้ข้อมูล.
-- **AI Safety UX Standard A:** บังคับใช้ marker ความปลอดภัยในงาน UX/AI ที่เกี่ยวข้องกับการกระทำสำคัญต่อข้อมูลผู้ใช้.
+  - TH: ใช้ภาษาไทยที่เป็นธรรมชาติ สุภาพ กระชับ และสอดคล้องกับบริบทของงาน โดยหลีกเลี่ยงศัพท์เทคนิคที่ไม่จำเป็น
+  - EN: Use clear, concise English with consistent intent, terminology, and action labels across screens.
+- **Progressive Disclosure (Benefit-first):** Start with the user benefit, then reveal technical detail only when the task or risk requires it.
+- **Contextual Awareness (2-3 day return):** UX must help a returning user understand the latest state, unfinished work, and next action within a few seconds.
+- **Privacy Assurance (Standard A):** Tasks involving sensitive content must provide Human Confirmation and a plain-language explanation of how data will be used.
+- **AI Safety UX Standard A:** Important AI actions must expose safety markers, confirmation checkpoints, and clear recovery paths.
 
-Reference set:
-- [AI UX Design System](docs/ai-ux-design-system-th.md)
-- [Serene Dashboard Mockup](docs/smartnote-serene-dashboard-mockup.html)
-- [Serene Search Mockup](docs/smartnote-serene-search-mockup.html)
-- [Editor UI Mockup](docs/editor-ui-mockup.html)
+## ✅ UX Safety Acceptance Checklist
 
+Every UX-affecting change should be reviewed against this checklist.
 
+- **TH:** ทุก flow ที่กระทบข้อมูลสำคัญต้องมี Human Confirmation ที่เข้าใจง่าย และยกเลิกได้
+- **EN:** Sensitive flows must provide an understandable Human Confirmation step with a safe cancel path.
+- **TH:** ต้องระบุให้ผู้ใช้ทราบว่า AI กำลังทำอะไร ใช้ข้อมูลใด และผลลัพธ์สามารถแก้ไขหรือปฏิเสธได้
+- **EN:** Users must be told what the AI is doing, which data is being used, and whether results can be edited or discarded.
+- **TH:** ผู้ใช้ที่กลับมาใช้งานหลัง 2-3 วันต้องเห็นสถานะล่าสุด สรุปสิ่งค้าง และทางเลือกถัดไปอย่างชัดเจน
+- **EN:** Returning users should immediately see recent status, pending items, and recommended next actions.
+- **TH:** คำศัพท์ไทยและอังกฤษต้องตรงกัน โดยเฉพาะปุ่มที่เกี่ยวกับการยืนยัน การลบ และการแชร์ข้อมูล
+- **EN:** Thai and English labels should stay semantically aligned, especially for confirm, delete, and data-sharing actions.
 
-### CI Stability & UX Safety Enforcement
+## 🛠️ CI/CD Reliability Standards
 
-To keep CI/CD resilient and UX-safe by default, this repository enforces the following:
+The workflow set is designed to fail only on genuine issues and to skip optional stacks safely when a matching project is not present.
 
-- **Workflow Reliability:** retry/backoff strategy for dependency installation and rollout checks to reduce flaky failures.
-- **Dependency Guardrails:** pull requests are evaluated by Dependency Review with moderate-or-higher severity gating.
-- **Autoscaling Readiness for Recovery:** Kubernetes autoscaling manifests are continuously validated (HPA, KEDA, and Prometheus alert rules) so the platform can scale and recover when certain CI/CD checks or workloads become unstable.
-- **UX Safety Standard A (TH/EN):**
-  - TH: ทุกฟีเจอร์ที่เกี่ยวข้องกับข้อมูลสำคัญต้องมี Human Confirmation และคำอธิบายการใช้ข้อมูลที่เข้าใจง่าย
-  - EN: Any feature that can impact sensitive user data must include Human Confirmation and clear data-use disclosure.
+- **Workflow reliability:** CI validates workflow inventory, syntax, and README/UX documentation alignment.
+- **Dependency guardrails:** pull requests are reviewed with `actions/dependency-review-action` and gated at moderate severity or higher.
+- **Optional stack detection:** Android, Next.js, Conda, and Webpack workflows now detect whether their stack exists before trying to build it.
+- **Deployment readiness:** deployment automation validates kubeconfig secrets, migration manifests, autoscaling files, and rollout behavior before continuing.
+- **Autoscaling readiness for recovery:** Kubernetes autoscaling manifests are continuously checked so the platform can recover when workloads or CI/CD operations become unstable.
+
+## 🔍 Improvements Applied in the Current Baseline
+
+- Stabilized optional workflows so absent app stacks do not create false-negative CI failures.
+- Added stronger preflight validation for Algorithmia test input, deployment prerequisites, and manual issue-summary runs.
+- Tightened README/UX documentation coupling so CI can enforce bilingual UX and safety expectations.
+- Clarified that the repository currently centers on specs, mockups, and delivery assets, avoiding drift between documentation and actual contents.
+
+## 🧪 Suggested Validation Routine
+
+When changing docs or workflow policy, run these checks locally when the tools are available:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+for path in sorted(Path('.github/workflows').glob('*.yml')):
+    print(path)
+PY
+
+for workflow in .github/workflows/*.yml; do
+  ruby -e "require 'yaml'; YAML.load_file(ARGV[0])" "$workflow"
+done
+
+rg -n "UX Specification Baseline|UX Safety Acceptance Checklist|System Structure by Layer" README.md
+```
+
+## 🔧 Recommendations for Further Fixes
+
+1. **Add repository-local schema/tests for workflows:** include a pinned local linter setup (for example, vendored `actionlint` in tooling or a containerized validation script) so workflow syntax can be checked even in restricted environments.
+2. **Introduce reusable workflows:** extract repeated retry/detect logic into shared workflows or composite actions to reduce maintenance overhead.
+3. **Add deployment environment matrices:** parameterize cluster names, namespaces, and service lists so deploy automation matches actual environments instead of assuming a fixed set.
+4. **Version bilingual UX copy:** store canonical TH/EN labels in a single source of truth to keep mockups, docs, and application code aligned.
+5. **Expand smoke tests:** add artifact-free documentation tests and manifest validation (for example kubeconform or policy checks) to catch operational regressions earlier.
+
+## 🚀 Recommendations for Future Expansion
+
+1. **Check in runnable app surfaces:** add minimal web/mobile service skeletons so the workflows can validate real builds instead of documentation-only structure.
+2. **Add UX contract tests:** verify mandatory safety markers, confirmation flows, and bilingual label parity in UI snapshots or end-to-end tests.
+3. **Connect docs to architecture decisions:** formalize ADRs for AI orchestration, data retention, and sync guarantees.
+4. **Strengthen observability:** extend Prometheus rules, rollout metrics, and incident playbooks for AI-heavy workloads.
+5. **Add release readiness dashboards:** summarize workflow health, documentation drift, and deployment guardrail status in a single report.
 
 ## 🙌 Contributing
 
-We welcome contributions from the community! To contribute, please follow these steps:
-
-1.  Fork the repository.
-2.  Create a new branch (`git checkout -b feature/your-feature-name`).
-3.  Make your changes and commit them with a descriptive message.
-4.  Push your changes to the branch (`git push origin feature/your-feature-name`).
-5.  Open a Pull Request, and we'll review it as soon as possible.
+1. Fork the repository.
+2. Create a feature branch.
+3. Update workflows, docs, or manifests with bilingual UX and safety requirements in mind.
+4. Run the relevant local checks.
+5. Open a pull request with notes about CI impact, UX impact, and any follow-up work.
 
 ## 📄 License
 
