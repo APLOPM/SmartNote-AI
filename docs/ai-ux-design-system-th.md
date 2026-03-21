@@ -108,3 +108,17 @@
 -   **ไม่แอบอ้างเป็นมนุษย์:** ใช้คำว่า "AI" หรือ "SmartNote AI" เพื่อให้ผู้ใช้รู้ว่ากำลังคุยกับระบบ
 
 ---
+
+### 5.1 Bilingual UX Copy Standard
+
+- **TH:** ใช้ภาษาที่เป็นธรรมชาติ กระชับ สุภาพ และชี้ประโยชน์ก่อนรายละเอียดทางเทคนิค
+- **EN:** Use natural, concise, polite copy that leads with user value before technical detail
+- ปุ่มหรือข้อความสำหรับ `Confirm`, `Cancel`, `Delete`, `Share Data`, `Retry` ต้องแปลให้มีเจตนาเดียวกันทั้งสองภาษา
+
+### 5.2 UX Security Guardrails
+
+- ทุก flow ที่เกี่ยวข้องกับการแชร์ข้อมูล, การลบถาวร, หรือการเรียก agent หลายขั้นตอน ต้องมี risk cue ที่มองเห็นได้
+- ต้องอธิบายว่า AI ใช้ข้อมูลใดและจะส่งต่อไปยัง provider ภายนอกหรือไม่
+- ต้องมี fallback message เมื่อ provider timeout, route failover, หรือจำเป็นต้องให้ผู้ใช้ยืนยันซ้ำ
+- Returning users ต้องเห็นสถานะล่าสุด, งานค้าง, และ next step recommendation ภายในหน้าจอแรก
+

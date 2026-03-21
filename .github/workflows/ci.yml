@@ -27,21 +27,10 @@ jobs:
       - name: Validate workflow syntax with actionlint
         uses: rhysd/actionlint@v1.7.7
 
-      - name: Validate workflow inventory
+      - name: Validate workflow inventory from manifest
         run: |
           set -euo pipefail
-          expected_workflows=14
-          actual_workflows=$(find .github/workflows -maxdepth 1 -type f -name '*.yml' | wc -l | tr -d ' ')
-          test "$actual_workflows" -eq "$expected_workflows"
-          test -f .github/workflows/ci.yml
-          test -f .github/workflows/dependency-review.yml
-          test -f .github/workflows/deploy.yml
-          test -f .github/workflows/build.yml
-          test -f .github/workflows/android.yml
-          test -f .github/workflows/nextjs.yml
-          test -f .github/workflows/python-package-conda.yml
-          test -f .github/workflows/webpack.yml
-          test -f .github/labeler.yml
+          python3 scripts/validate_workflow_inventory.py
 
   docs-mockups:
     name: ตรวจสอบหน้า mockup
@@ -60,21 +49,7 @@ jobs:
       - name: Validate baseline UX spec docs and README mapping
         run: |
           set -euo pipefail
-          test -f docs/ai-ux-design-system-th.md
-          rg -q "UX Specification Baseline \(Always Included\)" README.md
-          rg -q "Bilingual Conversational UX Baseline \(TH/EN\)" README.md
-          rg -q "docs/ai-ux-design-system-th.md" README.md
-          rg -q "docs/smartnote-serene-dashboard-mockup.html" README.md
-          rg -q "docs/smartnote-serene-search-mockup.html" README.md
-          rg -q "docs/editor-ui-mockup.html" README.md
-          rg -q "Progressive Disclosure \(Benefit-first\)" README.md
-          rg -q "Contextual Awareness \(2-3 day return\)" README.md
-          rg -q "Privacy Assurance \(Standard A\)" README.md
-          rg -q "AI Safety UX Standard A" README.md
-          rg -q "TH: ใช้ภาษาไทยที่เป็นธรรมชาติ" README.md
-          rg -q "EN: Use clear, concise English" README.md
-          rg -q "UX Safety Acceptance Checklist" README.md
-          rg -q "System Structure by Layer" README.md
+          python3 scripts/validate_readme_ux.py
 
       - name: Enforce UX Safety Standard A markers
         run: |
@@ -86,6 +61,8 @@ jobs:
           rg -q "Progressive Disclosure" docs/ai-ux-design-system-th.md
           rg -q "Contextual Awareness" docs/ai-ux-design-system-th.md
           rg -q "Privacy Assurance" docs/ai-ux-design-system-th.md
+          rg -q "Bilingual UX Copy Standard" docs/ai-ux-design-system-th.md
+          rg -q "UX Security Guardrails" docs/ai-ux-design-system-th.md
 
   dependency-guardrails:
     name: ตรวจสอบการพึ่งพา
@@ -226,4 +203,6 @@ jobs:
           test -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
           test -f k8s/autoscaling/keda-kafka-autoscaling.yaml
           test -f k8s/autoscaling/alerts-prometheus-rules.yaml
-          rg -q "autoscaling" README.md
+          rg -q "CI/CD Recovery & Elastic Scaling Policy" README.md
+          rg -q "Autoscaling & Recovery Controls" docs/advanced-architecture.md
+          rg -q "CI fallback queue policy" docs/advanced-architecture.md

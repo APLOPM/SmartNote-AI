@@ -24,6 +24,50 @@ This repository is currently organized around product and platform foundations r
 - **Platform operations:** Kubernetes manifests for autoscaling, rollout, and migration jobs.
 - **CI/CD governance:** GitHub Actions workflows that validate docs, dependency policy, deployment readiness, and operational smoke checks.
 
+## 🏗️ Advanced Platform Architecture (Target State)
+
+SmartNote AI is evolving toward a provider-agnostic, agent-driven architecture that separates user channels, orchestration, domain services, AI infrastructure, and model providers.
+
+```text
+SmartNote AI Platform
+
+Client
+ ├─ Web
+ ├─ Mobile
+ └─ API
+
+AI Gateway
+ ├─ Prompt Router
+ ├─ LLM Router
+ └─ Agent Manager
+
+Core Services
+ ├─ Note Service
+ ├─ Folder Service
+ ├─ Search Service
+ └─ AI Service
+
+AI Infrastructure
+ ├─ Vector DB
+ ├─ Embedding Engine
+ └─ Knowledge Graph
+
+LLM Providers
+ ├─ OpenAI
+ ├─ Anthropic
+ ├─ Grok
+ ├─ DeepSeek
+ └─ Local LLM
+```
+
+### Why this architecture
+
+- **Channel separation:** web, mobile, and external API consumers can evolve independently.
+- **AI Gateway control plane:** prompt routing, provider routing, and agent execution policies stay centralized.
+- **Composable core services:** notes, folders, search, and AI processing can scale independently.
+- **Provider portability:** OpenAI, Anthropic, Grok, DeepSeek, and Local LLM remain interchangeable behind routing policy.
+- **Retrieval depth:** Vector DB + Embedding Engine + Knowledge Graph give better recall than keyword-only search.
+
 ## 🧱 System Structure by Layer
 
 ### 1) Experience Layer
@@ -72,6 +116,7 @@ Operational assets support reliability, scaling, and deployment governance.
 ## 🧭 Key Documentation Map
 
 - [AI UX Design System](docs/ai-ux-design-system-th.md)
+- [Advanced Architecture](docs/advanced-architecture.md)
 - [Agent Memory Layer ERD](docs/agent-memory-layer-er.md)
 - [Technical Specification (TH)](docs/smartnote-ai-technical-spec-th.md)
 - [Product Overview (TH)](docs/smartnote-ai-product-overview-th.md)
@@ -114,6 +159,16 @@ The workflow set is designed to fail only on genuine issues and to skip optional
 - **Optional stack detection:** Android, Next.js, Conda, and Webpack workflows now detect whether their stack exists before trying to build it.
 - **Deployment readiness:** deployment automation validates kubeconfig secrets, migration manifests, autoscaling files, and rollout behavior before continuing.
 - **Autoscaling readiness for recovery:** Kubernetes autoscaling manifests are continuously checked so the platform can recover when workloads or CI/CD operations become unstable.
+
+## ♻️ CI/CD Recovery & Elastic Scaling Policy
+
+To keep CI stable without hiding real risk, the repository uses a tiered reliability policy.
+
+- **Blocking checks:** workflow syntax, dependency review, README/UX parity, planner/tool contract validation, and deploy prerequisites.
+- **Elastic non-blocking checks:** autoscaling advisory checks and optional-stack validation can emit notices without failing the full pipeline when the repository does not contain that stack.
+- **Retry-first operations:** dependency installation and rollout checks should retry before failing to reduce transient network or registry noise.
+- **Recovery-aware autoscaling:** Kubernetes HPA/KEDA assets are maintained so API, embedding, retrieval, and AI workloads can recover when CI/CD or background demand spikes.
+- **Fallback replay design:** selected expensive or transient checks should be rerun asynchronously rather than immediately blocking all delivery paths.
 
 ## 🔍 Improvements Applied in the Current Baseline
 

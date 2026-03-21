@@ -216,6 +216,9 @@ enum MemoryType {
 }
 
 // This relational table holds references to vectors stored in a Vector DB.
+// Single source of truth: embeddings are stored in the external vector layer or pgvector-backed SQL migrations,
+// while Prisma keeps only the reference identifier (`embeddingId`) plus metadata needed by the agent platform.
+// This avoids Prisma pretending to own a pgvector column that may be provisioned separately during infra rollout.
 model LongTermMemory {
   id            String        @id @default(uuid())
   userId        String
