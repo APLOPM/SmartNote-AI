@@ -1,0 +1,26 @@
+{
+  "required_workflows": [
+    "algorithmia-test-algo.yml",
+    "android.yml",
+    "build.yml",
+    "ci.yml",
+    "dependency-review.yml",
+    "deploy.yml",
+    "greetings.yml",
+    "label.yml",
+    "nextjs.yml",
+    "python-package-conda.yml",
+    "self-hosted-runner-smoke.yml",
+    "stale.yml",
+    "summary.yml",
+    "webpack.yml"
+  ],
+  "required_repo_files": [
+    ".github/labeler.yml",
+    "README.md",
+    "docs/ai-ux-design-system-th.md",
+    "docs/smartnote-serene-dashboard-mockup.html",
+    "docs/smartnote-serene-search-mockup.html",
+    "docs/editor-ui-mockup.html"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "smartnote-ai-platform",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "lint": "tsc --noEmit -p tsconfig.contracts.json",
+    "test": "tsx --test tests/**/*.test.ts",
+    "validate:docs": "python3 scripts/validate_readme_ux.py",
+    "validate:workflows": "python3 scripts/validate_workflow_inventory.py"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "@types/node": "^22.13.10"
+  }
+}
