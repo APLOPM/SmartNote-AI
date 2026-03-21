@@ -27,14 +27,21 @@ jobs:
       - name: Validate workflow syntax with actionlint
         uses: rhysd/actionlint@v1.7.7
 
-      - name: Validate critical workflow files exist
+      - name: Validate workflow inventory
         run: |
           set -euo pipefail
+          expected_workflows=14
+          actual_workflows=$(find .github/workflows -maxdepth 1 -type f -name '*.yml' | wc -l | tr -d ' ')
+          test "$actual_workflows" -eq "$expected_workflows"
           test -f .github/workflows/ci.yml
           test -f .github/workflows/dependency-review.yml
           test -f .github/workflows/deploy.yml
           test -f .github/workflows/build.yml
+          test -f .github/workflows/android.yml
+          test -f .github/workflows/nextjs.yml
+          test -f .github/workflows/python-package-conda.yml
           test -f .github/workflows/webpack.yml
+          test -f .github/labeler.yml
 
   docs-mockups:
     name: ตรวจสอบหน้า mockup
@@ -66,6 +73,8 @@ jobs:
           rg -q "AI Safety UX Standard A" README.md
           rg -q "TH: ใช้ภาษาไทยที่เป็นธรรมชาติ" README.md
           rg -q "EN: Use clear, concise English" README.md
+          rg -q "UX Safety Acceptance Checklist" README.md
+          rg -q "System Structure by Layer" README.md
 
       - name: Enforce UX Safety Standard A markers
         run: |
@@ -99,7 +108,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       fail-fast: false
-      max-parallel: ${{ github.event_name == 'pull_request' && 3 || 1 }}
+      max-parallel: 1
       matrix:
         include:
           - service: api
@@ -115,7 +124,7 @@ jobs:
         id: detect
         run: |
           set -euo pipefail
-          lockfile=""
+          lockfile="package-lock.json"
           service_dir=""
 
           if [ -f "services/${{ matrix.service }}/package.json" ]; then
@@ -134,8 +143,8 @@ jobs:
           fi
 
           echo "service_dir=$service_dir" >> "$GITHUB_OUTPUT"
+          echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
           if [ -f "$lockfile" ]; then
-            echo "lockfile=$lockfile" >> "$GITHUB_OUTPUT"
             echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
@@ -148,7 +157,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: ${{ steps.detect.outputs.lockfile || 'package-lock.json' }}
+          cache-dependency-path: ${{ steps.detect.outputs.lockfile }}
 
       - name: Install dependencies (with retry and lockfile fallback)
         if: steps.detect.outputs.should_run == 'true'
@@ -177,14 +186,14 @@ jobs:
             retry "$CI_RETRY_MAX" npm install --no-audit --no-fund
           fi
 
-      - name: Lint (retry)
+      - name: Lint (best effort)
         if: steps.detect.outputs.should_run == 'true'
         run: |
           set -euo pipefail
           cd "${{ steps.detect.outputs.service_dir }}"
           npm run lint --if-present
 
-      - name: Test (retry)
+      - name: Test (best effort)
         if: steps.detect.outputs.should_run == 'true'
         run: |
           set -euo pipefail

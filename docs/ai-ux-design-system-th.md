@@ -19,6 +19,24 @@
 4.  **Trust (ความน่าเชื่อถือ):** แสดงผลลัพธ์อย่างโปร่งใส และให้เครดิตแหล่งข้อมูล (ถ้ามี)
 5.  **Feedback (การตอบสนอง):** ระบบต้องให้ feedback ทันทีเมื่อ AI เริ่มทำงาน, กำลังประมวลผล, และทำงานเสร็จ
 
+### 2.1 Conversational Onboarding Baseline (TH/EN)
+
+- **TH:** ข้อความเริ่มต้นต้องอธิบายประโยชน์ที่ผู้ใช้จะได้รับก่อน แล้วค่อยอธิบายขั้นตอนหรือข้อจำกัดที่สำคัญ
+- **EN:** Opening guidance should lead with the user benefit, then reveal important steps or constraints only when needed
+- ต้องใช้คำศัพท์ไทยและอังกฤษที่สอดคล้องกัน โดยเฉพาะการยืนยัน การยกเลิก การแชร์ข้อมูล และการลบข้อมูล
+
+### 2.2 Progressive Disclosure / Contextual Awareness / Privacy Assurance
+
+- **Progressive Disclosure:** แสดงรายละเอียดเชิงเทคนิคเมื่อมีความจำเป็นต่อการตัดสินใจของผู้ใช้เท่านั้น
+- **Contextual Awareness:** ผู้ใช้ที่กลับมาใช้งานหลัง 2-3 วันต้องเข้าใจสถานะล่าสุดได้ภายในไม่กี่วินาที
+- **Privacy Assurance:** ทุกงานที่แตะข้อมูลสำคัญต้องอธิบายการใช้ข้อมูลและระบุจุดที่ต้องให้ Human Confirmation อย่างชัดเจน
+
+### 2.3 AI Safety UX Standard A
+
+- ฟีเจอร์ AI ที่กระทบข้อมูลสำคัญต้องมี **AI Safety UX Standard A** marker ใน flow, mockup หรือสเปกที่เกี่ยวข้อง
+- ต้องมี **Human Confirmation** ก่อนการกระทำที่มีผลถาวรหรือมีผลต่อข้อมูลอ่อนไหว
+- ต้องมีทางเลือกให้ผู้ใช้ยกเลิก แก้ไข หรือย้อนกลับได้อย่างชัดเจน
+
 ### 3. รูปแบบการปฏิสัมพันธ์หลัก (Core UX Patterns)
 
 #### 3.1. AI Agent Invocation (การเรียกใช้ AI Agent)
@@ -58,6 +76,15 @@
     -   มีข้อความบอกสถานะ เช่น "AI is thinking...", "Generating slides...", "Searching the web..."
 
 ### 4. องค์ประกอบ UI (UI Components)
+
+#### 4.0 Design Tokens
+
+- **Primary Text:** `#111827`
+- **Supportive Text:** `#4B5563`
+- **AI Accent:** `#7C3AED`
+- **Safety Confirmation:** `#0F766E`
+- **Warning / Sensitive Action:** `#B45309`
+- โทนสีและ spacing ต้องคงความสม่ำเสมอในทั้งภาษาไทยและอังกฤษ
 
 #### 4.1. AI Button
 

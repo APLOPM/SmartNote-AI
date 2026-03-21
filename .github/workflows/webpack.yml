@@ -32,11 +32,11 @@ jobs:
         id: detect
         run: |
           set -euo pipefail
-          if [ -f package.json ]; then
+          if [ -f package.json ] && rg -q '"webpack"' package.json; then
             echo "has_package_json=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_package_json=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skip webpack build: package.json not found at repository root."
+            echo "::notice::Skip webpack build: package.json with webpack dependency/script not found at repository root."
           fi
 
       - name: Use Node.js ${{ matrix.node-version }}
