@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 readme = (ROOT / 'README.md').read_text(encoding='utf-8')
 ux_doc = (ROOT / 'docs' / 'ai-ux-design-system-th.md').read_text(encoding='utf-8')
 architecture_doc = (ROOT / 'docs' / 'advanced-architecture.md').read_text(encoding='utf-8')
+rag_doc = (ROOT / 'docs' / 'vector-search-rag-spec.md').read_text(encoding='utf-8')
 
 required_readme_markers = [
     'UX Specification Baseline (Always Included)',
@@ -15,8 +16,11 @@ required_readme_markers = [
     'Privacy Assurance (Standard A)',
     'AI Safety UX Standard A',
     'Advanced Platform Architecture (Target State)',
+    'Vector Search / RAG Architecture Baseline',
+    'Chat with your notes',
     'CI/CD Recovery & Elastic Scaling Policy',
-    'docs/advanced-architecture.md'
+    'docs/advanced-architecture.md',
+    'docs/vector-search-rag-spec.md'
 ]
 
 required_ux_markers = [
@@ -38,7 +42,18 @@ required_architecture_markers = [
     'Agent Manager',
     'Vector DB',
     'Knowledge Graph',
+    'RAG Retrieval Contract',
     'Autoscaling & Recovery Controls'
+]
+
+required_rag_markers = [
+    'Vector Search / RAG Specification',
+    'Note Ingestion -> Embedding -> Vector Index -> Retrieval -> Answer',
+    'Chat with your notes',
+    'Knowledge retrieval',
+    'Human Confirmation',
+    'pgvector',
+    'Qdrant'
 ]
 
 for marker in required_readme_markers:
@@ -53,4 +68,8 @@ for marker in required_architecture_markers:
     if marker not in architecture_doc:
         raise SystemExit(f'Missing architecture marker: {marker}')
 
-print('README, UX baseline, and advanced architecture markers are aligned.')
+for marker in required_rag_markers:
+    if marker not in rag_doc:
+        raise SystemExit(f'Missing RAG marker: {marker}')
+
+print('README, UX baseline, architecture, and RAG markers are aligned.')

@@ -49,10 +49,17 @@ LLM Providers
 - **Agent Manager:** จัด orchestration แบบ multi-step, tool execution, human confirmation, retry, snapshot, audit log
 
 ### 2.3 Core Services
-- **Note Service:** note lifecycle, sharing policy, versioning, retention
+- **Note Service:** note lifecycle, sharing policy, versioning, retention, chunk lifecycle for retrieval
 - **Folder Service:** hierarchy, ACL, team workspace boundaries
 - **Search Service:** keyword + semantic search + graph-assisted recall
 - **AI Service:** summarization, drafting, translation, extraction, task execution
+
+### 2.3.1 RAG Retrieval Contract
+1. Note content is chunked with workspace, locale, and source metadata before indexing.
+2. Embedding Engine generates multilingual embeddings and records model/version metadata.
+3. Vector DB stores chunk vectors while relational storage keeps note, ACL, and workflow metadata.
+4. Search Service performs semantic or hybrid retrieval with tenant/workspace filters first.
+5. AI Service assembles grounded context for answer generation, always preserving Human Confirmation for sensitive actions.
 
 ### 2.4 AI Infrastructure
 - **Vector DB:** semantic retrieval และ hybrid retrieval routing
@@ -113,10 +120,16 @@ LLM Providers
 ## 6. Dependency Baseline
 
 - TypeScript runtime/tooling สำหรับ orchestration contracts
-- Zod สำหรับ schema validation ระหว่าง planner กับ tools
+- Zod สำหรับ schema validation ระหว่าง planner กับ tools และ RAG retrieval contracts
 - Prisma สำหรับ relational metadata และ task orchestration records
 - pgvector / Vector DB สำหรับ semantic recall
 - Kafka/KEDA สำหรับ asynchronous AI workloads
+
+## 6.1 Vector Search Technology Baseline
+
+- **Vector DB options:** `pgvector` เป็น default สำหรับ PostgreSQL-first deployments; `Weaviate`, `Milvus`, และ `Qdrant` เป็นทางเลือกเมื่อ scale, tenancy model, หรือ infra policy ต้องการแยก vector plane
+- **Embedding options:** `OpenAI text-embedding`, `BGE`, `E5`, และ `Instructor` ต้องถูก expose ผ่าน provider contract เดียวกัน เพื่อให้เปลี่ยน model ได้โดยไม่ทำให้ UX หรือ retrieval contract เปลี่ยน
+- **Operational baseline:** retrieval jobs ต้องรองรับ backfill, re-index, embedding refresh, score thresholds, และ CI-safe fallback เมื่อ optional vector stack ยังไม่ถูก provision
 
 ## 7. Minimum Deliverables for the Next Milestone
 

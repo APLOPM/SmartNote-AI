@@ -12,6 +12,7 @@ SmartNote AI is a bilingual (Thai/English) product concept for AI-assisted note 
 - **✍️ Intelligent Writing Assistant:** Improve, translate, summarize, and expand note content with inline AI assistance.
 - **🎙️ Multi-Modal Notes:** Support text, voice, image, OCR, and structured AI output blocks in a single workspace.
 - **🔎 Semantic Search:** Retrieve notes by intent and meaning, not only literal keywords.
+- **🧠 Chat with Your Notes:** Ground answers in retrieved note context with bilingual Thai/English UX safeguards.
 - **🕸️ Knowledge Mapping:** Visualize relationships between notes, tasks, and AI-generated insights.
 - **🔄 Sync & Reliability Controls:** Design for cross-platform sync, offline resilience, and operational guardrails in CI/CD.
 
@@ -65,8 +66,46 @@ LLM Providers
 - **Channel separation:** web, mobile, and external API consumers can evolve independently.
 - **AI Gateway control plane:** prompt routing, provider routing, and agent execution policies stay centralized.
 - **Composable core services:** notes, folders, search, and AI processing can scale independently.
+- **RAG-ready retrieval path:** Note content flows through chunking, embeddings, vector indexing, semantic search, and LLM answer synthesis.
 - **Provider portability:** OpenAI, Anthropic, Grok, DeepSeek, and Local LLM remain interchangeable behind routing policy.
 - **Retrieval depth:** Vector DB + Embedding Engine + Knowledge Graph give better recall than keyword-only search.
+
+## 🔍 Vector Search / RAG Architecture Baseline
+
+The note retrieval stack is now defined as a Retrieval-Augmented Generation (RAG) contract so semantic search, chat-with-your-notes, and knowledge retrieval stay aligned across docs, CI, and future implementations.
+
+```text
+Note
+ └─ content
+    └─ chunking + metadata
+          │
+          ▼
+Embedding Model
+ ├─ OpenAI text-embedding
+ ├─ BGE
+ ├─ E5
+ └─ Instructor
+          │
+          ▼
+Vector Database
+ ├─ pgvector
+ ├─ Weaviate
+ ├─ Milvus
+ └─ Qdrant
+          │
+          ▼
+Semantic / Hybrid Search
+          │
+          ▼
+LLM Answer + Human Confirmation
+```
+
+### RAG product outcomes
+
+- **Meaning-based note retrieval:** users can find notes by intent, topic similarity, and multilingual phrasing.
+- **Chat with your notes:** answers must be grounded in retrieved context before the assistant drafts or acts.
+- **Knowledge retrieval:** search can assemble note chunks, summaries, and related memory links into reusable evidence packs.
+- **Bilingual UX requirement:** TH/EN copy for search, fallback, and confirmation states must remain semantically aligned.
 
 ## 🧱 System Structure by Layer
 
@@ -117,6 +156,7 @@ Operational assets support reliability, scaling, and deployment governance.
 
 - [AI UX Design System](docs/ai-ux-design-system-th.md)
 - [Advanced Architecture](docs/advanced-architecture.md)
+- [Vector Search / RAG UX & Platform Spec](docs/vector-search-rag-spec.md)
 - [Agent Memory Layer ERD](docs/agent-memory-layer-er.md)
 - [Technical Specification (TH)](docs/smartnote-ai-technical-spec-th.md)
 - [Product Overview (TH)](docs/smartnote-ai-product-overview-th.md)
@@ -154,7 +194,7 @@ Every UX-affecting change should be reviewed against this checklist.
 
 The workflow set is designed to fail only on genuine issues and to skip optional stacks safely when a matching project is not present.
 
-- **Workflow reliability:** CI validates workflow inventory, syntax, and README/UX documentation alignment.
+- **Workflow reliability:** CI validates workflow inventory, syntax, README/UX documentation alignment, and RAG architecture markers.
 - **Dependency guardrails:** pull requests are reviewed with `actions/dependency-review-action` and gated at moderate severity or higher.
 - **Optional stack detection:** Android, Next.js, Conda, and Webpack workflows now detect whether their stack exists before trying to build it.
 - **Deployment readiness:** deployment automation validates kubeconfig secrets, migration manifests, autoscaling files, and rollout behavior before continuing.
@@ -174,7 +214,7 @@ To keep CI stable without hiding real risk, the repository uses a tiered reliabi
 
 - Stabilized optional workflows so absent app stacks do not create false-negative CI failures.
 - Added stronger preflight validation for Algorithmia test input, deployment prerequisites, and manual issue-summary runs.
-- Tightened README/UX documentation coupling so CI can enforce bilingual UX and safety expectations.
+- Tightened README/UX documentation coupling so CI can enforce bilingual UX, RAG retrieval behavior, and safety expectations.
 - Clarified that the repository currently centers on specs, mockups, and delivery assets, avoiding drift between documentation and actual contents.
 
 ## 🧪 Suggested Validation Routine
