@@ -1,0 +1,64 @@
+name: Asynchronous CI fallback replay
+
+on:
+  workflow_run:
+    workflows: ["CI", "Deploy"]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node for advisory replay
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies if present
+        run: |
+          set -euo pipefail
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::warning::Replay command still failed after ${attempt} attempts: $*"
+                return 0
+              fi
+              echo "::warning::Replay command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 5))s: $*"
+              sleep $((attempt * 5))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          if [ -f package-lock.json ]; then
+            retry 3 npm ci --no-audit --no-fund
+          elif [ -f package.json ]; then
+            retry 3 npm install --no-audit --no-fund
+          else
+            echo "::notice::Skipping npm install replay because package.json is not present."
+          fi
+
+      - name: Replay advisory documentation and autoscaling checks
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_readme_ux.py
+          python3 scripts/validate_workflow_inventory.py
+          npm run validate:ci-reliability
+          test -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
+          test -f k8s/autoscaling/keda-kafka-autoscaling.yaml
+          test -f k8s/autoscaling/alerts-prometheus-rules.yaml
+          echo "::notice::Fallback replay completed. Use this signal to separate transient CI issues from real blocking defects."

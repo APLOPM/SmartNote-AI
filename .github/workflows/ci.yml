@@ -50,6 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/validate_readme_ux.py
+          python3 scripts/validate_ci_reliability.py
 
       - name: Enforce UX Safety Standard A markers
         run: |
@@ -78,6 +79,52 @@ jobs:
           rg -q "uses: actions/dependency-review-action@v4" .github/workflows/dependency-review.yml
           rg -q "fail-on-severity: moderate" .github/workflows/dependency-review.yml
           rg -q "pull_request:" .github/workflows/dependency-review.yml
+
+  planner-tool-contracts:
+    name: ตรวจสอบ planner และ tool contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies (retry-first)
+        run: |
+          set -euo pipefail
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * CI_RETRY_BACKOFF_SECONDS))s: $*"
+              sleep $((attempt * CI_RETRY_BACKOFF_SECONDS))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          if [ -f package-lock.json ]; then
+            retry "$CI_RETRY_MAX" npm ci --no-audit --no-fund
+          else
+            retry "$CI_RETRY_MAX" npm install --no-audit --no-fund
+          fi
+
+      - name: Validate planner/tool contracts and CI reliability policy
+        run: |
+          set -euo pipefail
+          npm run lint
+          npm run test
+          npm run validate:docs
+          npm run validate:workflows
+          npm run validate:ci-reliability
 
   build-test:
     name: สร้าง-ทดสอบ (${{ matrix.service }})
@@ -206,3 +253,7 @@ jobs:
           rg -q "CI/CD Recovery & Elastic Scaling Policy" README.md
           rg -q "Autoscaling & Recovery Controls" docs/advanced-architecture.md
           rg -q "CI fallback queue policy" docs/advanced-architecture.md
+
+      - name: Emit advisory notice for async replay
+        run: |
+          echo "::notice::Autoscaling advisory checks are non-blocking here; the asynchronous fallback replay workflow can rerun them after CI or Deploy failures."

@@ -177,6 +177,17 @@ To keep product quality stable across releases, every UX proposal, implementatio
 - **Privacy Assurance (Standard A):** Tasks involving sensitive content must provide Human Confirmation and a plain-language explanation of how data will be used.
 - **AI Safety UX Standard A:** Important AI actions must expose safety markers, confirmation checkpoints, and clear recovery paths.
 
+## Minimum UX Release Gate
+
+These minimum UX release requirements are now treated as part of CI reliability policy so the pipeline can block real UX regressions without failing on unrelated optional stacks.
+
+- **TH baseline: ผู้ใช้ต้องเข้าใจประโยชน์ก่อนรายละเอียดเชิงเทคนิค** และต้องเห็นสถานะล่าสุด งานค้าง และทางเลือกถัดไปอย่างรวดเร็ว
+- **EN baseline: Users should understand the benefit before technical detail appears.** Returning users should also see the latest state, pending work, and a clear next action immediately.
+- **TH gate: flow ที่เกี่ยวข้องกับข้อมูลสำคัญต้องมี Human Confirmation** พร้อมคำอธิบายว่าระบบ AI ใช้ข้อมูลใด ส่งไปที่ไหน และยกเลิกได้อย่างไร
+- **EN gate: Sensitive flows must include Human Confirmation** plus a plain-language explanation of what data is used, where it is sent, and how the user can cancel safely.
+- **TH/EN parity gate:** ปุ่ม Confirm / Cancel / Delete / Share Data / Retry ต้องมีเจตนาเดียวกันทั้งสองภาษา
+- **Recovery gate:** หากการตรวจสอบบางรายการล้มเหลวจากปัจจัยชั่วคราว ให้ใช้ **Asynchronous fallback replay workflow** เพื่อยืนยันซ้ำแบบไม่บล็อกทันทีแทนการปกปิดความเสี่ยงจริง
+
 ## ✅ UX Safety Acceptance Checklist
 
 Every UX-affecting change should be reviewed against this checklist.
