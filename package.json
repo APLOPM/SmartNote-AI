@@ -7,7 +7,8 @@
     "lint": "tsc --noEmit -p tsconfig.contracts.json",
     "test": "tsx --test tests/**/*.test.ts",
     "validate:docs": "python3 scripts/validate_readme_ux.py",
-    "validate:workflows": "python3 scripts/validate_workflow_inventory.py"
+    "validate:workflows": "python3 scripts/validate_workflow_inventory.py",
+    "validate:ci-reliability": "python3 scripts/validate_ci_reliability.py"
   },
   "dependencies": {
     "zod": "^3.24.2"

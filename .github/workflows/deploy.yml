@@ -58,10 +58,25 @@ jobs:
       - name: Run migration job (before rollout)
         run: |
           set -euo pipefail
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 10))s"
+              sleep $((attempt * 10))
+              attempt=$((attempt + 1))
+            done
+          }
+
           kubectl delete job prisma-migrate --ignore-not-found=true
           API_IMAGE="$IMAGE_PREFIX/api:$DEPLOY_SHA"
-          sed "s|__API_IMAGE__|$API_IMAGE|g" k8s/cicd/prisma-migrate-job.yaml | kubectl apply -f -
-          kubectl wait --for=condition=complete --timeout=300s job/prisma-migrate
+          retry 3 sh -c 'sed "s|__API_IMAGE__|'"$API_IMAGE"'|g" k8s/cicd/prisma-migrate-job.yaml | kubectl apply -f -'
+          retry 3 kubectl wait --for=condition=complete --timeout=300s job/prisma-migrate
 
       - name: Set image tags (immutable SHA only)
         run: |
@@ -78,10 +93,25 @@ jobs:
       - name: Apply autoscaling baseline
         run: |
           set -euo pipefail
-          kubectl apply -f k8s/autoscaling/deployments-resources-and-rollout.yaml
-          kubectl apply -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
-          kubectl apply -f k8s/autoscaling/keda-kafka-autoscaling.yaml
-          kubectl apply -f k8s/autoscaling/alerts-prometheus-rules.yaml
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 10))s"
+              sleep $((attempt * 10))
+              attempt=$((attempt + 1))
+            done
+          }
+
+          retry 3 kubectl apply -f k8s/autoscaling/deployments-resources-and-rollout.yaml
+          retry 3 kubectl apply -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
+          retry 3 kubectl apply -f k8s/autoscaling/keda-kafka-autoscaling.yaml
+          retry 3 kubectl apply -f k8s/autoscaling/alerts-prometheus-rules.yaml
 
       - name: Wait rollout
         run: |
@@ -110,15 +140,30 @@ jobs:
       - name: Smoke test (API + DB + Kafka)
         run: |
           set -euo pipefail
+          retry() {
+            local max_attempts="$1"
+            shift
+            local attempt=1
+            until "$@"; do
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "::warning::Command failed (attempt ${attempt}/${max_attempts}), retrying in $((attempt * 10))s"
+              sleep $((attempt * 10))
+              attempt=$((attempt + 1))
+            done
+          }
+
           kubectl delete pod smoke-test --ignore-not-found=true
-          kubectl run smoke-test \
+          retry 3 kubectl run smoke-test \
             --image=$IMAGE_PREFIX/api:$DEPLOY_SHA \
             --restart=Never \
             --command -- npm run smoke:test
           kubectl wait --for=condition=Ready --timeout=180s pod/smoke-test || true
           kubectl wait --for=condition=ContainersReady --timeout=180s pod/smoke-test || true
-          kubectl wait --for=condition=Succeeded --timeout=600s pod/smoke-test
-          kubectl logs smoke-test
+          retry 3 kubectl wait --for=condition=Succeeded --timeout=600s pod/smoke-test
+          kubectl logs smoke-test || true
           kubectl delete pod smoke-test --ignore-not-found=true
 
       - name: Rollback on failure

@@ -4,6 +4,7 @@
     "android.yml",
     "build.yml",
     "ci.yml",
+    "ci-fallback-replay.yml",
     "dependency-review.yml",
     "deploy.yml",
     "greetings.yml",
