@@ -221,6 +221,33 @@ To keep CI stable without hiding real risk, the repository uses a tiered reliabi
 - **Recovery-aware autoscaling:** Kubernetes HPA/KEDA assets are maintained so API, embedding, retrieval, and AI workloads can recover when CI/CD or background demand spikes.
 - **Fallback replay design:** selected expensive or transient checks should be rerun asynchronously rather than immediately blocking all delivery paths.
 
+## 🧩 Production Agent Orchestrator Blueprint (MVP → Enterprise)
+
+The orchestration baseline now supports a practical path from a 5-agent MVP to 50+ enterprise agents with planner-driven execution.
+
+- **Orchestrator Core:** Task Router, Context Manager, Memory Manager, Agent Registry, Execution Engine, Result Aggregator
+- **Planner-first execution:** User requests can be converted into a task graph (DAG) instead of fixed rule-only routing
+- **Parallel + DAG scheduling:** independent tasks run in parallel, dependent tasks wait for upstream completion
+- **Agent-to-agent handoff:** critic/reviewer agents can validate outputs before writing/publishing agents finalize responses
+- **Tool contracts:** tools such as web search, SQL, and code execution are called through standardized schema validation
+- **Retry and recovery:** transient failures use retry-first logic and can be replayed by asynchronous CI fallback workflows
+
+### MVP scope that should be kept active
+
+- **5 core agents:** Planner, Research, Writing, Critic, Tool Agent
+- **Async orchestrator runtime:** supports sequential and parallel plans
+- **Baseline RAG:** memory retrieval + grounded response flow
+- **UX surfaces:** chat + agent panel with bilingual TH/EN safety labels
+
+### CI replay autoscaling for failed checks
+
+When CI or Deploy fails from transient causes, fallback replay now uses a matrix-driven replay strategy so selected checks can rerun concurrently instead of blocking all delivery paths.
+
+- replay target: docs parity
+- replay target: workflow inventory
+- replay target: CI reliability policy
+- replay target: autoscaling asset readiness
+
 ## 🔍 Improvements Applied in the Current Baseline
 
 - Stabilized optional workflows so absent app stacks do not create false-negative CI failures.

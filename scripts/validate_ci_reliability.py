@@ -39,6 +39,9 @@ required_fallback_markers = [
     'workflows: ["CI", "Deploy"]',
     'Asynchronous CI fallback replay',
     'continue-on-error: true',
+    'strategy:',
+    'max-parallel: 3',
+    'replay_target',
     'npm run validate:ci-reliability',
 ]
 

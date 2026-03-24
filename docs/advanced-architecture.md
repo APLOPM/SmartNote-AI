@@ -70,6 +70,28 @@ LLM Providers
 - ออกแบบแบบ provider-agnostic เพื่อให้สลับระหว่าง **OpenAI, Anthropic, Grok, DeepSeek และ Local LLM** ได้โดยไม่เปลี่ยน UX contract
 - ใช้ policy matrix ในการเลือก provider เช่น `high_safety`, `low_latency`, `low_cost`, `offline_only`
 
+## 3.1 Agent Orchestrator Core (Production Runtime)
+
+```text
+User Request
+   ↓
+API Gateway
+   ↓
+Orchestrator Core
+   ├── Task Router
+   ├── Context Manager
+   ├── Memory Manager
+   ├── Agent Registry
+   ├── Execution Engine
+   └── Result Aggregator
+   ↓
+Agents (Research / Writing / Dev / Critic / Tool)
+   ↓
+Tools / APIs / DB
+```
+
+แนวทางนี้รองรับการขยายจาก 5 agents ไปสู่ 50+ agents โดยยังคงหลักการ stateless workers, queue-based execution และ horizontal scaling
+
 ## 3. Request Flow (Advanced)
 
 1. Client ส่ง request พร้อม locale, workspace, feature flag, sensitivity label
