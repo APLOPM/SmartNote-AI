@@ -20,7 +20,10 @@ required_readme_markers = [
     'Chat with your notes',
     'CI/CD Recovery & Elastic Scaling Policy',
     'docs/advanced-architecture.md',
-    'docs/vector-search-rag-spec.md'
+    'docs/vector-search-rag-spec.md',
+    'Database Schema Baseline (PostgreSQL + pgvector)',
+    'sql/smartnote_ai_production_schema.sql',
+    'CI Failure Autoscaling Response'
 ]
 
 required_ux_markers = [

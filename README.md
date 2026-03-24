@@ -300,3 +300,27 @@ rg -n "UX Specification Baseline|UX Safety Acceptance Checklist|System Structure
 ## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 🗄️ Database Schema Baseline (PostgreSQL + pgvector)
+
+SmartNote-AI now includes a production-oriented SQL baseline at `sql/smartnote_ai_production_schema.sql` to align data contracts for:
+
+- Multi-user / Workspace / Project hierarchy
+- Multi-agent orchestration (`agent_runs`, `agent_logs`, `tool_calls`, `agent_skills`)
+- Memory and retrieval (`embeddings`, `knowledge_base`) via pgvector
+- Workflow automation (`workflows`, nodes, edges, runs)
+- Audit, usage cost control, and API key governance
+
+### TH/EN UX data contract note
+
+- **TH:** โครงสร้างข้อมูลถูกออกแบบให้รองรับการอธิบายสถานะงานและการยืนยันความปลอดภัย (Human Confirmation) ได้สม่ำเสมอทั้งภาษาไทยและอังกฤษ
+- **EN:** The schema is structured so status visibility and Human Confirmation UX can be enforced consistently in both Thai and English.
+
+## 📉➡️📈 CI Failure Autoscaling Response
+
+To reduce CI/CD flakiness from transient issues while preserving quality gates:
+
+- Blocking CI checks continue to enforce UX safety, dependency policy, and contract reliability.
+- Non-blocking replay targets can rerun asynchronously via `ci-fallback-replay.yml`.
+- Autoscaling manifests in `k8s/autoscaling/` are validated as recovery readiness assets for background queue and AI workloads.
+- Recommended operational pattern: when failure is transient, replay checks and let autoscaled workers clear backlog rather than force immediate full-pipeline retries.
