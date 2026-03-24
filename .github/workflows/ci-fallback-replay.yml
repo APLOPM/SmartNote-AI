@@ -18,13 +18,14 @@ jobs:
     continue-on-error: true
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 4
       matrix:
         replay_target:
           - docs
           - workflow_inventory
           - ci_reliability
           - autoscaling_assets
+          - homepage_ux
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -88,6 +89,14 @@ jobs:
           test -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
           test -f k8s/autoscaling/keda-kafka-autoscaling.yaml
           test -f k8s/autoscaling/alerts-prometheus-rules.yaml
+
+      - name: Replay first-use homepage UX target
+        if: matrix.replay_target == 'homepage_ux'
+        run: |
+          set -euo pipefail
+          test -f docs/smartnote-homepage-first-use-mockup.html
+          rg -q "First-Use Homepage UX \(TH/EN\)" docs/smartnote-homepage-first-use-mockup.html
+          rg -q "Human Confirmation \\+ UX Security Guardrails" docs/smartnote-homepage-first-use-mockup.html
 
       - name: Emit replay status notice
         run: |

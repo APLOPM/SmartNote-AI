@@ -40,8 +40,9 @@ required_fallback_markers = [
     'Asynchronous CI fallback replay',
     'continue-on-error: true',
     'strategy:',
-    'max-parallel: 3',
+    'max-parallel: 4',
     'replay_target',
+    'homepage_ux',
     'npm run validate:ci-reliability',
 ]
 

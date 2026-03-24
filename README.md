@@ -144,6 +144,7 @@ Operational assets support reliability, scaling, and deployment governance.
 ├── docs/
 │   ├── ai-ux-design-system-th.md   # UX principles, AI interaction patterns, safety markers
 │   ├── agent-memory-layer-er.md    # Agent memory/data relationship overview
+│   ├── smartnote-homepage-first-use-mockup.html  # First-use onboarding homepage (TH/EN)
 │   ├── smartnote-serene-*.html     # Dashboard and search mockups
 │   └── editor-ui-mockup.html       # Editor UX reference
 ├── k8s/
@@ -163,6 +164,7 @@ Operational assets support reliability, scaling, and deployment governance.
 - [Dashboard Mockup](docs/smartnote-serene-dashboard-mockup.html)
 - [Search Mockup](docs/smartnote-serene-search-mockup.html)
 - [Editor Mockup](docs/editor-ui-mockup.html)
+- [First-Use Homepage Mockup (TH/EN)](docs/smartnote-homepage-first-use-mockup.html)
 - [Codebase Audit & Fix Proposals (TH)](docs/codebase-audit-fix-proposals-th.md)
 
 ## 🎨 UX Specification Baseline (Always Included)
@@ -200,6 +202,16 @@ Every UX-affecting change should be reviewed against this checklist.
 - **EN:** Returning users should immediately see recent status, pending items, and recommended next actions.
 - **TH:** คำศัพท์ไทยและอังกฤษต้องตรงกัน โดยเฉพาะปุ่มที่เกี่ยวกับการยืนยัน การลบ และการแชร์ข้อมูล
 - **EN:** Thai and English labels should stay semantically aligned, especially for confirm, delete, and data-sharing actions.
+
+## 🏠 First-Use Homepage UX (TH/EN)
+
+The first-use homepage baseline is now documented as a dedicated mockup so onboarding quality can be reviewed like other core surfaces.
+
+- **Mockup file:** `docs/smartnote-homepage-first-use-mockup.html`
+- **TH:** เริ่มจากคุณค่าที่ผู้ใช้ได้รับทันที (เช่น จดไวขึ้น ค้นหาง่ายขึ้น) แล้วจึงเปิดเผยรายละเอียดเชิงเทคนิคแบบ Progressive Disclosure
+- **EN:** Start with immediate user value, then reveal technical setup only when required by task complexity or risk
+- **Context gate:** Returning users (2-3 day gap) must see “latest state + pending item + next action” within seconds
+- **Safety gate:** Sensitive actions in onboarding must include Human Confirmation with clear data-use explanation in TH/EN
 
 ## 🛠️ CI/CD Reliability Standards
 
@@ -247,6 +259,7 @@ When CI or Deploy fails from transient causes, fallback replay now uses a matrix
 - replay target: workflow inventory
 - replay target: CI reliability policy
 - replay target: autoscaling asset readiness
+- replay target: first-use homepage UX baseline
 
 ## 🔍 Improvements Applied in the Current Baseline
 

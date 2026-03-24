@@ -15,6 +15,8 @@ required_readme_markers = [
     'Contextual Awareness (2-3 day return)',
     'Privacy Assurance (Standard A)',
     'AI Safety UX Standard A',
+    'First-Use Homepage UX (TH/EN)',
+    'docs/smartnote-homepage-first-use-mockup.html',
     'Advanced Platform Architecture (Target State)',
     'Vector Search / RAG Architecture Baseline',
     'Chat with your notes',
@@ -35,6 +37,16 @@ required_ux_markers = [
     'Human Confirmation',
     'Bilingual UX Copy Standard',
     'UX Security Guardrails'
+]
+
+homepage_doc = (ROOT / 'docs' / 'smartnote-homepage-first-use-mockup.html').read_text(encoding='utf-8')
+required_homepage_markers = [
+    'First-Use Homepage UX (TH/EN)',
+    'Progressive Disclosure',
+    'Contextual Awareness',
+    'Bilingual UX Copy Standard',
+    'Human Confirmation + UX Security Guardrails',
+    'CI Failure Autoscaling Response'
 ]
 
 required_architecture_markers = [
@@ -74,5 +86,9 @@ for marker in required_architecture_markers:
 for marker in required_rag_markers:
     if marker not in rag_doc:
         raise SystemExit(f'Missing RAG marker: {marker}')
+
+for marker in required_homepage_markers:
+    if marker not in homepage_doc:
+        raise SystemExit(f'Missing homepage UX marker: {marker}')
 
 print('README, UX baseline, architecture, and RAG markers are aligned.')
