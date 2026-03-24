@@ -42,6 +42,7 @@ jobs:
       - name: Validate mockup files exist
         run: |
           set -euo pipefail
+          test -f docs/smartnote-homepage-first-use-mockup.html
           test -f docs/smartnote-serene-dashboard-mockup.html
           test -f docs/smartnote-serene-search-mockup.html
           test -f docs/editor-ui-mockup.html
@@ -64,6 +65,9 @@ jobs:
           rg -q "Privacy Assurance" docs/ai-ux-design-system-th.md
           rg -q "Bilingual UX Copy Standard" docs/ai-ux-design-system-th.md
           rg -q "UX Security Guardrails" docs/ai-ux-design-system-th.md
+          rg -q "First-Use Homepage UX \(TH/EN\)" docs/smartnote-homepage-first-use-mockup.html
+          rg -q "Human Confirmation \\+ UX Security Guardrails" docs/smartnote-homepage-first-use-mockup.html
+          rg -q "CI Failure Autoscaling Response" docs/smartnote-homepage-first-use-mockup.html
 
   dependency-guardrails:
     name: ตรวจสอบการพึ่งพา

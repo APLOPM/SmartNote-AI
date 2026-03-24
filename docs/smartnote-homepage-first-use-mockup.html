@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartNote AI - First Use Homepage</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: '#2563EB',
+              ink: '#0F172A',
+              calm: '#F8FAFC',
+              safe: '#0F766E',
+              warning: '#B45309',
+            },
+            fontFamily: {
+              body: ['Inter', 'Noto Sans Thai', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        min-height: 100dvh;
+        background: radial-gradient(circle at 0% 0%, #dbeafe 0, #f8fafc 42%);
+      }
+    </style>
+  </head>
+  <body class="font-body text-ink antialiased">
+    <main class="mx-auto max-w-5xl px-4 py-8 md:py-12">
+      <section class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm md:p-10">
+        <p class="mb-3 inline-flex rounded-full bg-brand/10 px-3 py-1 text-sm font-semibold text-brand">First-Use Homepage UX (TH/EN)</p>
+        <h1 class="text-3xl font-bold leading-tight md:text-4xl">เริ่มใช้งาน SmartNote AI ใน 60 วินาที<br /><span class="text-slate-600 text-2xl md:text-3xl">Start with value, then add details when needed.</span></h1>
+        <p class="mt-4 max-w-3xl text-slate-700">TH: หน้าแรกเน้นให้ผู้ใช้เห็นประโยชน์ทันที เช่น “จดไวขึ้น ค้นหาง่ายขึ้น” ก่อนเห็นขั้นตอนเชิงเทคนิค.<br/>EN: The homepage explains immediate benefits before asking users to configure advanced options.</p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button class="rounded-xl bg-brand px-5 py-3 font-semibold text-white shadow hover:bg-blue-700">เริ่มบันทึกแรก / Create first note</button>
+          <button class="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50">ดูตัวอย่างการใช้งาน / Watch demo</button>
+        </div>
+      </section>
+
+      <section class="mt-6 grid gap-4 md:grid-cols-3">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 class="font-semibold">Progressive Disclosure</h2>
+          <p class="mt-2 text-sm text-slate-600">TH: แสดงเฉพาะ 3 ขั้นตอนหลักบนหน้าแรก แล้วค่อยขยายรายละเอียดเมื่อต้องการ.<br/>EN: Show only essential steps first; expose advanced settings on demand.</p>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 class="font-semibold">Contextual Awareness</h2>
+          <p class="mt-2 text-sm text-slate-600">TH: ถ้าผู้ใช้กลับมาใน 2-3 วัน ระบบจะแสดงงานค้างและปุ่มทำต่อทันที.<br/>EN: Returning users see pending tasks and a clear resume action instantly.</p>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 class="font-semibold">Bilingual UX Copy Standard</h2>
+          <p class="mt-2 text-sm text-slate-600">TH/EN labels must keep the same intent for Confirm / Cancel / Delete / Share Data / Retry.</p>
+        </article>
+      </section>
+
+      <section class="mt-6 rounded-2xl border border-teal-200 bg-teal-50 p-6">
+        <h2 class="text-lg font-semibold text-safe">Human Confirmation + UX Security Guardrails</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-teal-900">
+          <li>TH: ก่อนแชร์ข้อมูลสำคัญ ต้องมีขั้นตอนยืนยันที่อ่านเข้าใจง่าย และยกเลิกได้.</li>
+          <li>EN: Sensitive actions require explicit Human Confirmation and safe cancel paths.</li>
+          <li>TH/EN: แจ้งให้ทราบว่า AI ใช้ข้อมูลอะไร ส่งไปที่ไหน และเก็บไว้นานเท่าใด.</li>
+        </ul>
+      </section>
+
+      <section class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+        <h2 class="text-lg font-semibold text-warning">CI Failure Autoscaling Response</h2>
+        <p class="mt-3 text-sm text-amber-900">When non-critical checks fail due to transient issues, CI/CD triggers asynchronous replay targets with matrix scaling so reliability checks can recover without hiding true UX or security regressions.</p>
+      </section>
+    </main>
+  </body>
+</html>
