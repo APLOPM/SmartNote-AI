@@ -11,6 +11,7 @@
   "include": [
     "src/llm/planner.ts",
     "src/llm/tool.registry.ts",
+    "src/orchestrator/**/*.ts",
     "tests/**/*.test.ts"
   ]
 }

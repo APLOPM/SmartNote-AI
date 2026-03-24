@@ -14,19 +14,30 @@ jobs:
   replay:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        replay_target:
+          - docs
+          - workflow_inventory
+          - ci_reliability
+          - autoscaling_assets
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node for advisory replay
+        if: matrix.replay_target == 'ci_reliability'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
       - name: Install dependencies if present
+        if: matrix.replay_target == 'ci_reliability'
         run: |
           set -euo pipefail
           retry() {
@@ -52,13 +63,32 @@ jobs:
             echo "::notice::Skipping npm install replay because package.json is not present."
           fi
 
-      - name: Replay advisory documentation and autoscaling checks
+      - name: Replay docs validation target
+        if: matrix.replay_target == 'docs'
         run: |
           set -euo pipefail
           python3 scripts/validate_readme_ux.py
+
+      - name: Replay workflow inventory validation target
+        if: matrix.replay_target == 'workflow_inventory'
+        run: |
+          set -euo pipefail
           python3 scripts/validate_workflow_inventory.py
+
+      - name: Replay CI reliability target
+        if: matrix.replay_target == 'ci_reliability'
+        run: |
+          set -euo pipefail
           npm run validate:ci-reliability
+
+      - name: Replay autoscaling advisory target
+        if: matrix.replay_target == 'autoscaling_assets'
+        run: |
+          set -euo pipefail
           test -f k8s/autoscaling/hpa-llm-cpu-rps.yaml
           test -f k8s/autoscaling/keda-kafka-autoscaling.yaml
           test -f k8s/autoscaling/alerts-prometheus-rules.yaml
-          echo "::notice::Fallback replay completed. Use this signal to separate transient CI issues from real blocking defects."
+
+      - name: Emit replay status notice
+        run: |
+          echo "::notice::Fallback replay target '${{ matrix.replay_target }}' completed. Matrix replay scales rechecks without blocking delivery."
