@@ -34,6 +34,56 @@ CREATE TABLE IF NOT EXISTS workspace_members (
     UNIQUE (workspace_id, user_id)
 );
 
+-- RBAC tables:
+-- - roles can be global (system) or workspace-scoped
+-- - permissions are global capabilities (e.g. notes.read, agents.run)
+-- - role_permissions is the role <-> permission mapping
+-- - member_roles supports assigning multiple roles per workspace member
+CREATE TABLE IF NOT EXISTS roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code TEXT UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS member_roles (
+    workspace_member_id UUID NOT NULL REFERENCES workspace_members(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (workspace_member_id, role_id)
+);
+
+-- Optional ABAC resource attributes to complement RBAC
+-- Keep common attributes normalized to enable policy checks in service layer.
+CREATE TABLE IF NOT EXISTS resource_attributes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    resource_type TEXT NOT NULL,
+    resource_id UUID NOT NULL,
+    owner_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    project_id UUID,
+    attributes JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, resource_type, resource_id)
+);
+
 -- ------------------------------------------------------------------
 -- 2) Project / Notes / Files
 -- ------------------------------------------------------------------
@@ -265,6 +315,16 @@ CREATE TABLE IF NOT EXISTS api_keys (
 -- ------------------------------------------------------------------
 
 CREATE INDEX IF NOT EXISTS idx_workspace_members_workspace_user ON workspace_members(workspace_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_roles_workspace_name ON roles(workspace_id, name);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_roles_system_name ON roles(name) WHERE workspace_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_permissions_code ON permissions(code);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role ON role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission ON role_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_member_roles_member ON member_roles(workspace_member_id);
+CREATE INDEX IF NOT EXISTS idx_member_roles_role ON member_roles(role_id);
+CREATE INDEX IF NOT EXISTS idx_resource_attributes_owner ON resource_attributes(owner_user_id);
+CREATE INDEX IF NOT EXISTS idx_resource_attributes_project ON resource_attributes(project_id);
+CREATE INDEX IF NOT EXISTS idx_resource_attributes_lookup ON resource_attributes(workspace_id, resource_type, resource_id);
 CREATE INDEX IF NOT EXISTS idx_projects_workspace ON projects(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_notes_workspace_project ON notes(workspace_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_workspace_project_status ON tasks(workspace_id, project_id, status);
