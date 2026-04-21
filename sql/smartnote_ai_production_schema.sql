@@ -294,12 +294,24 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE TABLE IF NOT EXISTS usage_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    session_id UUID NOT NULL,
+    agent_run_id UUID NOT NULL,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     agent_id UUID,
-    tokens_used INT NOT NULL DEFAULT 0 CHECK (tokens_used >= 0),
-    cost NUMERIC(12, 6) NOT NULL DEFAULT 0,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    input_tokens INT NOT NULL DEFAULT 0 CHECK (input_tokens >= 0),
+    output_tokens INT NOT NULL DEFAULT 0 CHECK (output_tokens >= 0),
+    cached_tokens INT CHECK (cached_tokens IS NULL OR cached_tokens >= 0),
+    unit_price_input NUMERIC(18, 8) NOT NULL CHECK (unit_price_input >= 0),
+    unit_price_output NUMERIC(18, 8) NOT NULL CHECK (unit_price_output >= 0),
+    currency CHAR(3) NOT NULL,
+    cost_micro BIGINT NOT NULL DEFAULT 0 CHECK (cost_micro >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    FOREIGN KEY (workspace_id, agent_id) REFERENCES agents(workspace_id, id) ON DELETE SET NULL
+    FOREIGN KEY (workspace_id, agent_id) REFERENCES agents(workspace_id, id) ON DELETE SET NULL,
+    FOREIGN KEY (workspace_id, session_id) REFERENCES sessions(workspace_id, id) ON DELETE CASCADE,
+    FOREIGN KEY (workspace_id, agent_run_id) REFERENCES agent_runs(workspace_id, id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -339,6 +351,10 @@ CREATE INDEX IF NOT EXISTS idx_tool_calls_run ON tool_calls(agent_run_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_nodes_workflow ON workflow_nodes(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_runs_workspace_workflow_status ON workflow_runs(workspace_id, workflow_id, status);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_user_created_at ON usage_logs(workspace_id, user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_daily ON usage_logs(workspace_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_model_daily ON usage_logs(workspace_id, provider, model, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_session ON usage_logs(workspace_id, session_id);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_agent_run ON usage_logs(workspace_id, agent_run_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_created_at ON audit_logs(user_id, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_api_keys_key_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_api_keys_workspace_user ON api_keys(workspace_id, user_id);
