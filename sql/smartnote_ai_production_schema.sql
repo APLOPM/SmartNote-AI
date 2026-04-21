@@ -304,9 +304,14 @@ CREATE TABLE IF NOT EXISTS usage_logs (
 
 CREATE TABLE IF NOT EXISTS api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    key TEXT UNIQUE NOT NULL,
+    key_hash TEXT NOT NULL,
+    key_prefix TEXT NOT NULL,
+    scopes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
     revoked_at TIMESTAMPTZ
 );
 
@@ -335,6 +340,9 @@ CREATE INDEX IF NOT EXISTS idx_workflow_nodes_workflow ON workflow_nodes(workflo
 CREATE INDEX IF NOT EXISTS idx_workflow_runs_workspace_workflow_status ON workflow_runs(workspace_id, workflow_id, status);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_user_created_at ON usage_logs(workspace_id, user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_created_at ON audit_logs(user_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_api_keys_key_hash ON api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_workspace_user ON api_keys(workspace_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_active_lookup ON api_keys(workspace_id, revoked_at, expires_at);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_global_name ON tools(name) WHERE is_custom = false;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_workspace_name ON tools(workspace_id, name) WHERE is_custom = true;
 CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
