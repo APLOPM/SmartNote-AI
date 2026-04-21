@@ -42,36 +42,43 @@ CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, id)
 );
 
 CREATE TABLE IF NOT EXISTS notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL DEFAULT '',
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    FOREIGN KEY (workspace_id, project_id) REFERENCES projects(workspace_id, id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL,
     filename TEXT NOT NULL,
     file_url TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    FOREIGN KEY (workspace_id, project_id) REFERENCES projects(workspace_id, id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL,
     title TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('todo','in_progress','done','blocked')),
     assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
     due_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    FOREIGN KEY (workspace_id, project_id) REFERENCES projects(workspace_id, id) ON DELETE CASCADE
 );
 
 -- ------------------------------------------------------------------
@@ -82,7 +89,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, id),
+    FOREIGN KEY (workspace_id, user_id) REFERENCES workspace_members(workspace_id, user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -99,11 +108,13 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE TABLE IF NOT EXISTS agents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     role TEXT NOT NULL,
     model TEXT NOT NULL,
     config JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, id)
 );
 
 CREATE TABLE IF NOT EXISTS agent_skills (
@@ -117,14 +128,17 @@ CREATE TABLE IF NOT EXISTS agent_skills (
 
 CREATE TABLE IF NOT EXISTS agent_runs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE RESTRICT,
-    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL,
+    session_id UUID NOT NULL,
     input TEXT,
     output TEXT,
     status TEXT NOT NULL CHECK (status IN ('queued','running','completed','failed','cancelled')),
     started_at TIMESTAMPTZ,
     finished_at TIMESTAMPTZ,
-    CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
+    CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at),
+    FOREIGN KEY (workspace_id, agent_id) REFERENCES agents(workspace_id, id) ON DELETE RESTRICT,
+    FOREIGN KEY (workspace_id, session_id) REFERENCES sessions(workspace_id, id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS agent_logs (
@@ -140,8 +154,11 @@ CREATE TABLE IF NOT EXISTS agent_logs (
 
 CREATE TABLE IF NOT EXISTS tools (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT UNIQUE NOT NULL,
-    description TEXT
+    workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    is_custom BOOLEAN NOT NULL DEFAULT false,
+    CHECK ((is_custom = true AND workspace_id IS NOT NULL) OR (is_custom = false AND workspace_id IS NULL))
 );
 
 CREATE TABLE IF NOT EXISTS tool_calls (
@@ -160,6 +177,7 @@ CREATE TABLE IF NOT EXISTS tool_calls (
 
 CREATE TABLE IF NOT EXISTS embeddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     embedding VECTOR(1536) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -182,7 +200,8 @@ CREATE TABLE IF NOT EXISTS workflows (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (workspace_id, id)
 );
 
 CREATE TABLE IF NOT EXISTS workflow_nodes (
@@ -201,11 +220,13 @@ CREATE TABLE IF NOT EXISTS workflow_edges (
 
 CREATE TABLE IF NOT EXISTS workflow_runs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workflow_id UUID NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    workflow_id UUID NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('queued','running','completed','failed','cancelled')),
     started_at TIMESTAMPTZ,
     finished_at TIMESTAMPTZ,
-    CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at)
+    CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at),
+    FOREIGN KEY (workspace_id, workflow_id) REFERENCES workflows(workspace_id, id) ON DELETE CASCADE
 );
 
 -- ------------------------------------------------------------------
@@ -222,11 +243,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 CREATE TABLE IF NOT EXISTS usage_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    agent_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+    agent_id UUID,
     tokens_used INT NOT NULL DEFAULT 0 CHECK (tokens_used >= 0),
     cost NUMERIC(12, 6) NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    FOREIGN KEY (workspace_id, agent_id) REFERENCES agents(workspace_id, id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -243,20 +266,125 @@ CREATE TABLE IF NOT EXISTS api_keys (
 
 CREATE INDEX IF NOT EXISTS idx_workspace_members_workspace_user ON workspace_members(workspace_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_workspace ON projects(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_notes_project ON notes(project_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_project_status ON tasks(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_notes_workspace_project ON notes(workspace_id, project_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_workspace_project_status ON tasks(workspace_id, project_id, status);
 CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
-CREATE INDEX IF NOT EXISTS idx_agent_runs_session ON agent_runs(session_id);
+CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace_session ON agent_runs(workspace_id, session_id);
 CREATE INDEX IF NOT EXISTS idx_tool_calls_run ON tool_calls(agent_run_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_nodes_workflow ON workflow_nodes(workflow_id);
-CREATE INDEX IF NOT EXISTS idx_workflow_runs_workflow_status ON workflow_runs(workflow_id, status);
-CREATE INDEX IF NOT EXISTS idx_usage_logs_user_created_at ON usage_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_workflow_runs_workspace_workflow_status ON workflow_runs(workspace_id, workflow_id, status);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_user_created_at ON usage_logs(workspace_id, user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_created_at ON audit_logs(user_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_global_name ON tools(name) WHERE is_custom = false;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_workspace_name ON tools(workspace_id, name) WHERE is_custom = true;
+CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_embeddings_workspace ON embeddings(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_base_workspace ON knowledge_base(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
 
 CREATE INDEX IF NOT EXISTS idx_embeddings_ivfflat_cosine
   ON embeddings USING ivfflat (embedding vector_cosine_ops);
 
 CREATE INDEX IF NOT EXISTS idx_knowledge_base_ivfflat_cosine
   ON knowledge_base USING ivfflat (embedding vector_cosine_ops);
+
+-- ------------------------------------------------------------------
+-- 10) RLS Workspace Guards
+-- ------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION app_current_user_id() RETURNS UUID AS $$
+BEGIN
+    RETURN NULLIF(current_setting('app.current_user_id', true), '')::uuid;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION app_workspace_access(target_workspace UUID) RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1
+        FROM workspace_members wm
+        WHERE wm.workspace_id = target_workspace
+          AND wm.user_id = app_current_user_id()
+    );
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tools ENABLE ROW LEVEL SECURITY;
+ALTER TABLE embeddings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_base ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workflows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workflow_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usage_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY projects_workspace_isolation ON projects
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY notes_workspace_isolation ON notes
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY files_workspace_isolation ON files
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY tasks_workspace_isolation ON tasks
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY sessions_workspace_isolation ON sessions
+    USING (
+        app_workspace_access(workspace_id)
+        AND user_id = app_current_user_id()
+    )
+    WITH CHECK (
+        app_workspace_access(workspace_id)
+        AND user_id = app_current_user_id()
+    );
+
+CREATE POLICY agents_workspace_isolation ON agents
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY agent_runs_workspace_isolation ON agent_runs
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY tools_workspace_isolation ON tools
+    USING (
+        (is_custom = false)
+        OR app_workspace_access(workspace_id)
+    )
+    WITH CHECK (
+        (is_custom = false AND workspace_id IS NULL)
+        OR (is_custom = true AND app_workspace_access(workspace_id))
+    );
+
+CREATE POLICY embeddings_workspace_isolation ON embeddings
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY knowledge_base_workspace_isolation ON knowledge_base
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY workflows_workspace_isolation ON workflows
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY workflow_runs_workspace_isolation ON workflow_runs
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
+
+CREATE POLICY usage_logs_workspace_isolation ON usage_logs
+    USING (app_workspace_access(workspace_id))
+    WITH CHECK (app_workspace_access(workspace_id));
 
 ANALYZE;
