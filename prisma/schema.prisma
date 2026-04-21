@@ -20,8 +20,28 @@ model User {
   createdAt     DateTime        @default(now()) @map("created_at")
   agentSessions AgentSession[]
   longTermMemories LongTermMemory[]
+  apiKeys       ApiKey[]
 
   @@map("users")
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  workspaceId String    @map("workspace_id")
+  keyHash     String    @unique @map("key_hash")
+  keyPrefix   String    @map("key_prefix")
+  scopes      String[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, userId])
+  @@index([workspaceId, revokedAt, expiresAt])
+  @@map("api_keys")
 }
 
 enum PlanType {
