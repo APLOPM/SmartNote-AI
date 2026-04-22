@@ -242,24 +242,32 @@ enum MemoryType {
 model LongTermMemory {
   id            String        @id @default(uuid())
   userId        String
+  workspaceId   String        @map("workspace_id")
+  projectId     String?       @map("project_id")
   sourceType    SourceType    @map("source_type")
   sourceId      String        @map("source_id") // e.g., note_id, task_id
+  chunkIndex    Int?          @map("chunk_index")
+  tokenCount    Int?          @map("token_count")
+  embeddingModel String?      @map("embedding_model")
   embeddingId   String        @unique @map("embedding_id") // ID in Pinecone/Weaviate
   summary       String?
   createdAt     DateTime      @default(now()) @map("created_at")
+  deletedAt     DateTime?     @map("deleted_at")
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   taskLinks     LongTermMemoryLink[]
 
-  @@index([userId])
-  @@index([sourceType, sourceId])
+  @@index([userId, workspaceId])
+  @@index([workspaceId, sourceType, sourceId])
+  @@index([workspaceId, createdAt(sort: Desc)])
   @@map("long_term_memory")
 }
 
 enum SourceType {
-  NOTE
-  TASK
-  CONVERSATION
+  MESSAGE     @map("message")
+  NOTE        @map("note")
+  FILE_CHUNK  @map("file_chunk")
+  KB_DOC      @map("kb_doc")
 }
 
 // Many-to-many link between Agent Tasks and Long-Term Memories

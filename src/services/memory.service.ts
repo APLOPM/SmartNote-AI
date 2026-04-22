@@ -35,18 +35,30 @@ export class MemoryService {
 
   async storeLongTermMemory(
     userId: string,
+    workspaceId: string,
     sourceType: SourceType,
     sourceId: string,
     embeddingId: string,
-    summary: string
+    summary: string,
+    options?: {
+      projectId?: string
+      chunkIndex?: number
+      tokenCount?: number
+      embeddingModel?: string
+    }
   ) {
     return prisma.longTermMemory.create({
       data: {
         userId,
+        workspaceId,
         sourceType,
         sourceId,
         embeddingId,
-        summary
+        summary,
+        projectId: options?.projectId,
+        chunkIndex: options?.chunkIndex,
+        tokenCount: options?.tokenCount,
+        embeddingModel: options?.embeddingModel
       }
     })
   }

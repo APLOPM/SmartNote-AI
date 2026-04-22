@@ -1,0 +1,27 @@
+-- Manual SQL for pgvector deployments.
+-- Prisma schema tracks metadata only, so vector indexes/partitioning are managed in SQL.
+
+-- Option A: IVF/HNSW indexes per workspace via partial indexes
+-- (works when vectors are stored in long_term_memory.embedding or a joined table).
+-- Example assumes a table `long_term_memory_vectors(memory_id uuid primary key, embedding vector(1536))`.
+-- Adjust dimensions/operator class to match your embedding model and distance metric.
+--
+-- CREATE INDEX CONCURRENTLY IF NOT EXISTS ltm_vectors_ws_<workspace_id>_hnsw_idx
+--   ON long_term_memory_vectors
+--   USING hnsw (embedding vector_cosine_ops)
+--   WHERE memory_id IN (
+--     SELECT id FROM long_term_memory WHERE workspace_id = '<workspace_id>' AND deleted_at IS NULL
+--   );
+
+-- Option B: Partition by workspace for large multi-tenant datasets.
+-- Example DDL (new table setup):
+--
+-- CREATE TABLE long_term_memory_partitioned (
+--   LIKE long_term_memory INCLUDING ALL
+-- ) PARTITION BY LIST (workspace_id);
+--
+-- CREATE TABLE long_term_memory_ws_123
+--   PARTITION OF long_term_memory_partitioned
+--   FOR VALUES IN ('123');
+--
+-- Then create vector index per partition (or partition-local vector table).
