@@ -314,11 +314,53 @@ CREATE TABLE IF NOT EXISTS workflow_run_nodes (
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    actor_type TEXT NOT NULL CHECK (actor_type IN ('user','api_key','system','agent')),
+    actor_id UUID,
+    target_type TEXT,
+    target_id UUID,
+    request_id TEXT,
+    ip_address INET,
+    user_agent TEXT,
     action TEXT NOT NULL,
+    result TEXT NOT NULL CHECK (result IN ('success','denied','error')),
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Audit logs are append-only: disallow UPDATE/DELETE.
+CREATE OR REPLACE FUNCTION prevent_audit_log_mutation()
+RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION 'audit_logs is append-only; % is not allowed', TG_OP;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_prevent_audit_log_update ON audit_logs;
+CREATE TRIGGER trg_prevent_audit_log_update
+BEFORE UPDATE ON audit_logs
+FOR EACH ROW
+EXECUTE FUNCTION prevent_audit_log_mutation();
+
+DROP TRIGGER IF EXISTS trg_prevent_audit_log_delete ON audit_logs;
+CREATE TRIGGER trg_prevent_audit_log_delete
+BEFORE DELETE ON audit_logs
+FOR EACH ROW
+EXECUTE FUNCTION prevent_audit_log_mutation();
+
+-- Retention helper: execute periodically (e.g., pg_cron) to prune old audit rows.
+CREATE OR REPLACE FUNCTION enforce_audit_log_retention(retention_interval INTERVAL DEFAULT INTERVAL '365 days')
+RETURNS BIGINT AS $$
+DECLARE
+    deleted_count BIGINT;
+BEGIN
+    DELETE FROM audit_logs
+    WHERE created_at < now() - retention_interval;
+
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TABLE IF NOT EXISTS usage_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -385,7 +427,9 @@ CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_daily ON usage_logs(workspac
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_model_daily ON usage_logs(workspace_id, provider, model, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_session ON usage_logs(workspace_id, session_id);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_agent_run ON usage_logs(workspace_id, agent_run_id);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_user_created_at ON audit_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_workspace_created_at_desc ON audit_logs(workspace_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_created_at_desc ON audit_logs(actor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_target_created_at_desc ON audit_logs(target_type, target_id, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_api_keys_key_hash ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_api_keys_workspace_user ON api_keys(workspace_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_api_keys_active_lookup ON api_keys(workspace_id, revoked_at, expires_at);
