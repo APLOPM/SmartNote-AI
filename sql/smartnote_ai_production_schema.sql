@@ -228,18 +228,32 @@ CREATE TABLE IF NOT EXISTS tool_calls (
 CREATE TABLE IF NOT EXISTS embeddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    project_id UUID,
+    source_type TEXT NOT NULL CHECK (source_type IN ('message','note','file_chunk','kb_doc')),
+    source_id UUID NOT NULL,
+    chunk_index INTEGER,
+    token_count INTEGER,
+    embedding_model TEXT,
     content TEXT NOT NULL,
     embedding VECTOR(1536) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS knowledge_base (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    project_id UUID,
+    source_type TEXT NOT NULL CHECK (source_type IN ('message','note','file_chunk','kb_doc')),
+    source_id UUID NOT NULL,
+    chunk_index INTEGER,
+    token_count INTEGER,
+    embedding_model TEXT,
     content TEXT NOT NULL,
     embedding VECTOR(1536) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
 );
 
 -- ------------------------------------------------------------------
@@ -363,9 +377,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_global_name ON tools(name) WHERE is_c
 CREATE UNIQUE INDEX IF NOT EXISTS uq_tools_workspace_name ON tools(workspace_id, name) WHERE is_custom = true;
 CREATE INDEX IF NOT EXISTS idx_agents_workspace ON agents(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_embeddings_workspace ON embeddings(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_embeddings_workspace_source_lookup ON embeddings(workspace_id, source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_embeddings_workspace_created_at_desc ON embeddings(workspace_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_knowledge_base_workspace ON knowledge_base(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_base_workspace_source_lookup ON knowledge_base(workspace_id, source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_base_workspace_created_at_desc ON knowledge_base(workspace_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_workflows_workspace ON workflows(workspace_id);
 
+-- NOTE:
+-- If workspace cardinality is high or tenant data is large, prefer LIST partitioning by workspace_id
+-- and create one vector index per partition for better maintenance and predictable recall latency.
 CREATE INDEX IF NOT EXISTS idx_embeddings_ivfflat_cosine
   ON embeddings USING ivfflat (embedding vector_cosine_ops);
 
