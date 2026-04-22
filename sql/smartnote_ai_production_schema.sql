@@ -293,6 +293,21 @@ CREATE TABLE IF NOT EXISTS workflow_runs (
     FOREIGN KEY (workspace_id, workflow_id) REFERENCES workflows(workspace_id, id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS workflow_run_nodes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workflow_run_id UUID NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,
+    node_id UUID NOT NULL REFERENCES workflow_nodes(id) ON DELETE CASCADE,
+    status TEXT NOT NULL CHECK (status IN ('queued','running','success','failed','skipped')),
+    input JSONB,
+    output JSONB,
+    error TEXT,
+    started_at TIMESTAMPTZ,
+    finished_at TIMESTAMPTZ,
+    attempt INTEGER NOT NULL DEFAULT 1 CHECK (attempt >= 1),
+    CHECK (finished_at IS NULL OR started_at IS NULL OR finished_at >= started_at),
+    UNIQUE (workflow_run_id, node_id, attempt)
+);
+
 -- ------------------------------------------------------------------
 -- 8) Audit / Billing / API Keys
 -- ------------------------------------------------------------------
@@ -364,6 +379,7 @@ CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace_session ON agent_runs(worksp
 CREATE INDEX IF NOT EXISTS idx_tool_calls_run ON tool_calls(agent_run_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_nodes_workflow ON workflow_nodes(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_runs_workspace_workflow_status ON workflow_runs(workspace_id, workflow_id, status);
+CREATE INDEX IF NOT EXISTS idx_workflow_run_nodes_run_status ON workflow_run_nodes(workflow_run_id, status);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_user_created_at ON usage_logs(workspace_id, user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_daily ON usage_logs(workspace_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_workspace_model_daily ON usage_logs(workspace_id, provider, model, created_at DESC);
